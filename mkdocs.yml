@@ -35,20 +35,11 @@ nav:
   - Home: index.md
   - Getting Started:
     - Quick Start: getting-started/quick-start.md
-    - Installation: getting-started/installation.md
-    - Basic Usage: getting-started/basic-usage.md
-  - User Guide:
-    - Understanding Colors: user-guide/colors.md
-    - Effect Modes: user-guide/effects.md
-    - Batch Processing: user-guide/batch-processing.md
-    - Tips & Tricks: user-guide/tips.md
-  - Advanced:
-    - Technical Details: advanced/technical.md
-    - API Reference: advanced/api.md
-    - Customization: advanced/customization.md
-  - Examples:
-    - Gallery: examples/gallery.md
-    - Tutorials: examples/tutorials.md
+  - Technical Documentation:
+    - Requirements: requirements.md
+    - Design: design.md
+    - Development Tasks: tasks.md
+    - Known Issues: ourfailures.md
   - FAQ: faq.md
 
 markdown_extensions:

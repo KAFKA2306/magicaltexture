@@ -1,30 +1,28 @@
 # core.py
 # Core image processing functions for Magical Texture
-# Contains all the mathematical and algorithmic implementations
 
 from __future__ import annotations
-
 from typing import Optional, Tuple
 import numpy as np
 from PIL import Image
 
 
 def load_rgba(img: Image.Image) -> np.ndarray:
-    """Convert PIL Image to RGBA ndarray(uint8)"""
+    """PIL Image -> RGBA ndarray(uint8)"""
     return np.array(img.convert("RGBA"), dtype=np.uint8)
 
 
 def load_mask(mask_img: Image.Image, size: Tuple[int, int]) -> np.ndarray:
-    """Convert PIL Image to binary mask(0/1) ndarray(uint8), resize to target image size"""
+    """PIL Image -> 2値マスク(0/1) ndarray(uint8), サイズは対象画像に合わせる"""
     if mask_img.size != size:
         mask_img = mask_img.resize(size, Image.Resampling.LANCZOS)
     m = np.array(mask_img.convert("L"), dtype=np.uint8)
-    # Binary threshold (white=1 for application)
+    # 0/1 の二値化（白=1で適用）
     return (m > 32).astype(np.uint8)
 
 
 def rgb_to_hsv_np(rgb: np.ndarray) -> np.ndarray:
-    """RGB -> HSV (each 0-1, float32), maintains shape (..., 3)"""
+    """RGB -> HSV (各0-1, float32), 形状は (..., 3) を維持"""
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     maxc = np.max(rgb, axis=-1)
     minc = np.min(rgb, axis=-1)
@@ -38,7 +36,7 @@ def rgb_to_hsv_np(rgb: np.ndarray) -> np.ndarray:
     rc = np.zeros_like(r)
     gc = np.zeros_like(g)
     bc = np.zeros_like(b)
-    denom = (maxc - minc) + 1e-12  # Avoid division by zero
+    denom = (maxc - minc) + 1e-12  # ゼロ割回避
     rc[mask] = (maxc[mask] - r[mask]) / denom[mask]
     gc[mask] = (maxc[mask] - g[mask]) / denom[mask]
     bc[mask] = (maxc[mask] - b[mask]) / denom[mask]
@@ -54,7 +52,7 @@ def rgb_to_hsv_np(rgb: np.ndarray) -> np.ndarray:
 
 
 def hsv_to_rgb_np(hsv: np.ndarray) -> np.ndarray:
-    """HSV -> RGB (each 0-1, float32), maintains shape (..., 3)"""
+    """HSV -> RGB (各0-1, float32), 形状は (..., 3) を維持"""
     h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
     c = v * s
     h6 = (h * 6.0) % 6.0
@@ -89,7 +87,7 @@ def hsv_to_rgb_np(hsv: np.ndarray) -> np.ndarray:
 
 
 def mask_centroid(mask: np.ndarray) -> Optional[Tuple[int, int]]:
-    """Returns centroid (x, y) of mask region. None if no region exists."""
+    """マスク領域の重心 (x, y) を返す。存在しない場合 None。"""
     ys, xs = np.nonzero(mask)
     if len(xs) == 0:
         return None
@@ -105,7 +103,7 @@ def apply_basic(
     keep_value: float = 0.7,
     sat_scale: float = 1.0,
 ) -> np.ndarray:
-    """Basic mode: Simple hue replacement with uniform color"""
+    """色相だけ置換する基本モード"""
     a = rgb[..., 3:4] / 255.0
     base = rgb[..., :3] / 255.0
     hsv = rgb_to_hsv_np(base)
@@ -127,7 +125,7 @@ def apply_gradient(
     keep_value: float = 0.7,
     highlight: float = 0.4,
 ) -> np.ndarray:
-    """Gradient mode: Center to edge gradient with upper highlights"""
+    """中心→外周のグラデーション＋上部ハイライト"""
     h, w = mask01.shape
     cxcy = mask_centroid(mask01)
     base = rgb[..., :3] / 255.0
@@ -142,7 +140,7 @@ def apply_gradient(
     d_norm = (dist - dist_mask.min()) / (max(dist_mask.ptp(), 1e-6))
     d_norm = np.clip(d_norm, 0.0, 1.0)
 
-    # Inner to outer: vary saturation/value slightly
+    # 内側→外側で彩度/明度を少し変える
     local_sat = np.clip(sat * (0.85 + 0.3 * (1.0 - d_norm)), 0.0, 1.0)
     local_val = np.clip(val * (0.90 + 0.2 * (1.0 - d_norm)), 0.0, 1.0)
 
@@ -150,7 +148,7 @@ def apply_gradient(
     hsv[..., 1] = local_sat
     hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0)
 
-    # Upper highlight (slightly brighter)
+    # 上側ハイライト（少しだけ明るく）
     top = yy < (cy - 0.05 * h)
     hsv[..., 2] = np.where(
         top & (mask01 == 1),
@@ -174,7 +172,7 @@ def apply_aurora(
     keep_value: float = 0.7,
     strength: float = 0.3,
 ) -> np.ndarray:
-    """Aurora mode: Wave-like hue fluctuations for magical shimmer effect"""
+    """波状の色相揺らぎでオーロラ風に"""
     h, w = mask01.shape
     base = rgb[..., :3] / 255.0
     hsv = rgb_to_hsv_np(base)
@@ -204,7 +202,7 @@ def build_emission(
     outer: float = 0.14,
     softness: float = 0.06,
 ) -> np.ndarray:
-    """Create ring-shaped emission mask (L) around pupil area with relative radius"""
+    """瞳孔周辺のリング発光マスク(L)を作成（相対半径指定）"""
     h, w = mask01.shape
     cxcy = mask_centroid(mask01)
     if cxcy is None:

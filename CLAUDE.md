@@ -24,27 +24,33 @@ pip install -r requirements.txt
 
 ## Architecture Overview
 
-This is a Pastel Eye Colorizer application built with Gradio for web UI and NumPy/Pillow for image processing. The architecture is intentionally simple and monolithic for performance and maintainability.
+This is a Pastel Eye Colorizer application built with Gradio for web UI and NumPy/Pillow for image processing. The architecture is modular and well-organized for maintainability and scalability.
 
 ### Core Components
 
-**Main Application (`app.py`)**
-- Gradio-based web interface for uploading eye textures and masks
+**Main Application Entry (`app.py`)**
+- Entry point that imports and runs the modular application from `src/`
+- Fallback handling if modular structure is not available
+
+**Modular Structure (`src/` directory)**
+- `main.py`: Application entry point and launcher
+- `ui.py`: Gradio user interface components and layout
+- `core.py`: Core image processing algorithms (HSV conversion, transformations)
+- `config.py`: Color presets and configuration constants
+- `generators.py`: Single and batch generation functions
+- `__init__.py`: Package initialization
+
+**Key Features**
+- 9 pastel color presets defined in HSV space (including deep blue)
 - Three color transformation modes: Basic, Gradient, Aurora
-- 8 pastel color presets defined in HSV space
+- Batch processing with gallery display and ZIP downloads
 - Optional emission mask generation for glow effects
 
-**Image Processing Pipeline**
-- `load_rgba()` and `load_mask()`: Convert PIL images to NumPy arrays
-- `rgb_to_hsv_np()` and `hsv_to_rgb_np()`: Custom vectorized color space conversion
-- `apply_basic()`, `apply_gradient()`, `apply_aurora()`: Three transformation modes
-- `build_emission()`: Generate ring-shaped emission masks for lighting effects
-
 **Data Flow**
-1. User uploads eye texture (RGB/RGBA) and mask image
-2. Images converted to NumPy arrays, mask resized and binarized
-3. Color transformation applied only to masked regions
-4. Results converted back to PIL Images for display/download
+1. User uploads eye texture (RGB/RGBA) and mask image via Gradio UI
+2. Images processed through modular pipeline: conversion → transformation → output
+3. Single or batch processing generates results with organized file naming
+4. Results displayed in gallery with ZIP download option
 
 ### Key Design Patterns
 
@@ -66,6 +72,30 @@ This is a Pastel Eye Colorizer application built with Gradio for web UI and NumP
 - `highlight`: Top highlight strength for Gradient mode (0.0-1.0, default 0.4)
 - `aurora_strength`: Hue variation intensity for Aurora mode (0.0-0.6, default 0.3)
 
+## File Structure
+
+```
+├── app.py                 # Main entry point with fallback handling
+├── src/                   # Modular application code
+│   ├── __init__.py       # Package initialization  
+│   ├── main.py           # Application launcher
+│   ├── ui.py             # Gradio interface components
+│   ├── core.py           # Image processing algorithms
+│   ├── config.py         # Color presets and constants
+│   └── generators.py     # Generation functions
+├── requirements.txt       # Python dependencies
+├── README.md             # Project documentation
+├── docs/                 # Technical documentation
+├── mkdocs.yml            # Documentation site config
+└── .github/workflows/    # CI/CD pipeline
+
+```
+
 ## Deployment
 
-The application is configured for Hugging Face Spaces deployment with metadata in README.md frontmatter. The same code runs locally and on Spaces without modification.
+The application is configured for Hugging Face Spaces deployment with metadata in README.md frontmatter. The modular structure is automatically uploaded and runs seamlessly on both local and Spaces environments.
+
+CI/CD pipeline handles:
+- Linting of both `app.py` and `src/` modules
+- Smoke testing of modular imports
+- Automatic deployment to Hugging Face Spaces including the `src/` directory

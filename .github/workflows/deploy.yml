@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "app.py"
+      - "src/**"
       - "requirements.txt"
       - "README.md"
       - ".github/workflows/**"
@@ -42,7 +43,9 @@ jobs:
           pip install flake8
 
       - name: Lint
-        run: flake8 --max-line-length 120 app.py
+        run: |
+          flake8 --max-line-length 120 app.py
+          flake8 --max-line-length 120 src/*.py
 
       - name: Smoke test (import app)
         run: |
@@ -58,7 +61,7 @@ jobs:
         if: always()
         run: |
           mkdir -p dist
-          zip -r dist/magicaltexture-${{ github.sha }}.zip app.py requirements.txt README.md || true
+          zip -r dist/magicaltexture-${{ github.sha }}.zip app.py src/ requirements.txt README.md || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -115,6 +118,7 @@ jobs:
               path_in_repo=".",         # Space 直下に配置
               allow_patterns=[
                   "app.py",
+                  "src/**",
                   "requirements.txt",
                   "README.md",
                   "assets/**",
