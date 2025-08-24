@@ -1,3 +1,15 @@
+---
+title: Pastel Eye Colorizer
+emoji: 🎨
+colorFrom: cyan
+colorTo: pink
+sdk: gradio
+sdk_version: "4.0.0"
+app_file: app.py
+pinned: false
+---
+
+
 # magicaltexture へようこそ
 
 - 利用URL（実行サブドメイン）: https://k4fka-magicaltexture.hf.space
