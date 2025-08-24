@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import math
 from typing import Optional, Tuple
 
 import gradio as gr
