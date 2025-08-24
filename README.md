@@ -21,7 +21,10 @@ pinned: false
 
 ![howtouse1](mkdocs/image.png)
 
+
 # 使い方クイックガイド（README 追記用）
+
+https://kafka2306.github.io/magicaltexture/
 
 ## 1) マスクの作り方（超かんたん版）
 - 目的: 瞳の「色を変えたい部分＝虹彩」を白、その他を黒にした白黒マスクを作る

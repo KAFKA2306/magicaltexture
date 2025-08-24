@@ -125,7 +125,7 @@ def apply_gradient(
     keep_value: float = 0.7,
     highlight: float = 0.4,
 ) -> np.ndarray:
-    """中心→外周のグラデーション＋上部ハイライト"""
+    """Improved center-to-edge gradient with smooth transitions and natural highlights"""
     h, w = mask01.shape
     cxcy = mask_centroid(mask01)
     base = rgb[..., :3] / 255.0
@@ -137,22 +137,41 @@ def apply_gradient(
     yy, xx = np.mgrid[0:h, 0:w]
     dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
     dist_mask = dist[mask01 == 1]
+    
+    # Improved distance normalization with smoother falloff
     d_norm = (dist - dist_mask.min()) / (max(dist_mask.ptp(), 1e-6))
     d_norm = np.clip(d_norm, 0.0, 1.0)
-
-    # 内側→外側で彩度/明度を少し変える
-    local_sat = np.clip(sat * (0.85 + 0.3 * (1.0 - d_norm)), 0.0, 1.0)
-    local_val = np.clip(val * (0.90 + 0.2 * (1.0 - d_norm)), 0.0, 1.0)
+    
+    # Smooth falloff curve instead of linear - creates more natural gradient
+    falloff = 1.0 - np.power(d_norm, 1.2)  # Slight curve for more natural transition
+    
+    # More subtle saturation/value variation for better visual quality
+    local_sat = np.clip(sat * (0.92 + 0.16 * falloff), 0.0, 1.0)  # Less aggressive variation
+    local_val = np.clip(val * (0.94 + 0.12 * falloff), 0.0, 1.0)  # More subtle brightness change
 
     hsv[..., 0] = hue
     hsv[..., 1] = local_sat
     hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0)
 
-    # 上側ハイライト（少しだけ明るく）
-    top = yy < (cy - 0.05 * h)
+    # Improved highlight system with multiple zones and smoother blending
+    # Upper highlight zone (main)
+    upper_zone = yy < (cy - 0.03 * h)  # Slightly larger zone
+    # Additional subtle rim light
+    rim_zone = (d_norm > 0.7) & (d_norm < 0.95)
+    
+    # Apply highlights with smooth blending
+    highlight_strength = highlight * 0.12  # Reduced intensity for subtlety
     hsv[..., 2] = np.where(
-        top & (mask01 == 1),
-        np.clip(hsv[..., 2] + highlight * 0.15, 0.0, 1.0),
+        upper_zone & (mask01 == 1),
+        np.clip(hsv[..., 2] + highlight_strength * (1.0 - d_norm * 0.5), 0.0, 1.0),
+        hsv[..., 2],
+    )
+    
+    # Subtle rim lighting for depth
+    rim_strength = highlight * 0.08
+    hsv[..., 2] = np.where(
+        rim_zone & (mask01 == 1),
+        np.clip(hsv[..., 2] + rim_strength, 0.0, 1.0),
         hsv[..., 2],
     )
 
@@ -172,22 +191,39 @@ def apply_aurora(
     keep_value: float = 0.7,
     strength: float = 0.3,
 ) -> np.ndarray:
-    """波状の色相揺らぎでオーロラ風に"""
+    """Improved aurora effect with organic color shimmer and harmonious variations"""
     h, w = mask01.shape
     base = rgb[..., :3] / 255.0
     hsv = rgb_to_hsv_np(base)
 
     yy, xx = np.mgrid[0:h, 0:w]
-    wave = (
-        np.sin((xx + yy) * 0.02) * 0.4
-        + np.cos(xx * 0.015) * 0.3
-        + np.sin(yy * 0.02) * 0.3
-    )
-    hue_offset = np.clip(wave * strength, -0.15, 0.15)
+    
+    # More organic wave patterns with finer detail and better scaling
+    # Primary wave (creates main flow)
+    wave1 = np.sin((xx * 0.008 + yy * 0.005) * np.pi) * 0.35
+    # Secondary wave (creates shimmer detail)  
+    wave2 = np.cos((xx * 0.012 - yy * 0.009) * np.pi) * 0.25
+    # Tertiary wave (adds subtle complexity)
+    wave3 = np.sin((xx * 0.006 + yy * 0.011) * np.pi) * 0.15
+    
+    # Combine waves for more natural aurora flow
+    wave = wave1 + wave2 + wave3
+    hue_offset = np.clip(wave * strength, -0.12, 0.12)  # Slightly reduced range
 
+    # Apply hue variation with smooth wrapping
     hsv[..., 0] = (hue + hue_offset) % 1.0
-    hsv[..., 1] = np.clip(sat + (np.sin(xx * 0.01 + yy * 0.015) * 0.1 + 0.1), 0.0, 0.6)
+    
+    # More coherent saturation variation based on base saturation
+    sat_wave = np.sin(xx * 0.007 + yy * 0.009) * 0.08 + np.cos(xx * 0.005) * 0.06
+    # Keep saturation variation relative to the base and clamp reasonably
+    hsv[..., 1] = np.clip(sat * (1.0 + sat_wave), 0.0, min(sat * 1.3, 0.8))
+    
+    # Value follows the same pattern as basic mode for consistency
     hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + val * (1.0 - keep_value), 0.0, 1.0)
+    
+    # Add subtle additional brightness variation for aurora glow effect
+    brightness_wave = np.sin(xx * 0.009 - yy * 0.007) * 0.04
+    hsv[..., 2] = np.clip(hsv[..., 2] + brightness_wave * strength, 0.0, 1.0)
 
     recolor = hsv_to_rgb_np(hsv)
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)

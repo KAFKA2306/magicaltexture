@@ -14,17 +14,17 @@ PASTELS = {
     "deep_blue": (0.62, 0.48, 0.85),
 }
 
-# User-friendly color names
+# User-friendly color names (matching requirements documentation)
 PRETTY = {
-    "pastel_cyan": "Cyan",
-    "pastel_pink": "Pink", 
-    "pastel_lavender": "Lavender",
-    "pastel_mint": "Mint",
-    "pastel_peach": "Peach",
-    "pastel_lemon": "Lemon",
-    "pastel_coral": "Coral",
-    "pastel_sky": "Sky",
-    "deep_blue": "Deep Blue",
+    "pastel_cyan": "💧 Aqua Dream",
+    "pastel_pink": "🌸 Soft Blossom",
+    "pastel_lavender": "💜 Mystic Lavender",
+    "pastel_mint": "🌿 Fresh Mint",
+    "pastel_peach": "🍑 Warm Peach",
+    "pastel_lemon": "🍋 Sunny Lemon",
+    "pastel_coral": "🪸 Ocean Coral",
+    "pastel_sky": "☁️ Sky Blue",
+    "deep_blue": "🌊 Ocean Depths",
 }
 
 # Default values for UI
