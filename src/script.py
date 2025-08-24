@@ -85,8 +85,3 @@ for color_key in gradient_colors:
     print(f"✓ グラデーション版完了: {gradient_filename}")
 
 print(f"\n✨ グラデーション効果付きパステル {len(gradient_files)}色完了!")
-
----
-
-これらの生成なども一括で行って、一覧表示や一括ダウンロードできるようにしましょう
-全文コーディングしましょう。

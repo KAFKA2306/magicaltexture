@@ -193,3 +193,7 @@ numpy>=1.24.0
 - 反射/ハイライトの別マスク対応
 - ZIP 一括変換とドラッグ&ドロップ
 - 自動マスク推定（学習モデル導入）
+
+
+eye_color_pastel_lavender_aurora.png
+eye_color_pastel_cyan_aurora.png
