@@ -113,6 +113,7 @@ PASTELS = {
     "pastel_lemon": (0.15, 0.25, 0.95),
     "pastel_coral": (0.02, 0.35, 0.90),
     "pastel_sky": (0.55, 0.20, 0.95),
+    "deep_blue": (0.62, 0.48, 0.85),
 }
 PRETTY = {
     "pastel_cyan": "Cyan",
@@ -123,6 +124,7 @@ PRETTY = {
     "pastel_lemon": "Lemon",
     "pastel_coral": "Coral",
     "pastel_sky": "Sky",
+    "deep_blue": "Deep Blue",
 }
 
 

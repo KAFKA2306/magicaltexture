@@ -1,0 +1,97 @@
+site_name: Magical Texture - Eye Color Generator
+site_description: Transform eye textures with beautiful pastel colors using advanced image processing
+site_author: Magical Texture Team
+site_url: https://magical-texture.readthedocs.io
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: purple
+      accent: pink
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: purple
+      accent: pink
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quick-start.md
+    - Installation: getting-started/installation.md
+    - Basic Usage: getting-started/basic-usage.md
+  - User Guide:
+    - Understanding Colors: user-guide/colors.md
+    - Effect Modes: user-guide/effects.md
+    - Batch Processing: user-guide/batch-processing.md
+    - Tips & Tricks: user-guide/tips.md
+  - Advanced:
+    - Technical Details: advanced/technical.md
+    - API Reference: advanced/api.md
+    - Customization: advanced/customization.md
+  - Examples:
+    - Gallery: examples/gallery.md
+    - Tutorials: examples/tutorials.md
+  - FAQ: faq.md
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - codehilite
+  - def_list
+  - footnotes
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: magicaltexture
+      repo: eye-color-generator
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/magicaltexture/eye-color-generator
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/magicaltexture
+
+copyright: Copyright &copy; 2024 Magical Texture
