@@ -1,5 +1,5 @@
 # app.py
-# Pastel Eye Colorizer — mask領域だけをパステルカラー化（Basic / Gradient / Aurora）
+# Pastel Eye Colorizer — マスク領域だけをパステルカラー化（Basic / Gradient / Aurora）
 # Gradio / NumPy / Pillow
 
 from __future__ import annotations
@@ -105,7 +105,8 @@ def mask_centroid(mask: np.ndarray) -> Optional[Tuple[int, int]]:
     return int(xs.mean()), int(ys.mean())
 
 
-# パステル定義（HSV）
+# ---------- パステル定義（HSV） ----------
+
 PASTELS = {
     "pastel_cyan": (0.50, 0.30, 0.92),
     "pastel_pink": (0.92, 0.25, 0.95),
@@ -181,7 +182,7 @@ def apply_gradient(
     hsv[..., 1] = local_sat
     hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0)
 
-    # 上側ハイライト（少しだけ明るく）
+    # 上側ハイライト
     top = yy < (cy - 0.05 * h)
     hsv[..., 2] = np.where(
         top & (mask01 == 1),
@@ -235,7 +236,7 @@ def build_emission(
     inner: float = 0.07,
     outer: float = 0.14,
     softness: float = 0.06,
-) -> np.uint8:
+) -> np.ndarray:
     """瞳孔周辺のリング発光マスク(L)を作成（相対半径指定）"""
     h, w = mask01.shape
     cxcy = mask_centroid(mask01)
@@ -423,6 +424,7 @@ with gr.Blocks(title="Pastel Eye Colorizer") as demo:
         outputs=[out_img, emi_img],
     )
 
-# Hugging Face Spaces / ローカルの両方で利用可能
+# Hugging Face Spaces / ローカル両方で利用可能
 if __name__ == "__main__":
-    demo.launch()
+    # Spaces でも queue() 推奨（同時実行の安定性向上）
+    demo.queue().launch()
