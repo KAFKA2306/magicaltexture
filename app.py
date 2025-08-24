@@ -1,52 +1,70 @@
+# app.py
+# Pastel Eye Colorizer — mask領域だけをパステルカラー化（Basic / Gradient / Aurora）
+# Gradio / NumPy / Pillow
+
+from __future__ import annotations
+
+import math
+from typing import Optional, Tuple
+
 import gradio as gr
 import numpy as np
 from PIL import Image
-import math
 
 
 # ---------- ユーティリティ ----------
+
+
 def load_rgba(img: Image.Image) -> np.ndarray:
+    """PIL Image -> RGBA ndarray(uint8)"""
     return np.array(img.convert("RGBA"), dtype=np.uint8)
 
 
-def load_mask(mask_img: Image.Image, size) -> np.ndarray:
+def load_mask(mask_img: Image.Image, size: Tuple[int, int]) -> np.ndarray:
+    """PIL Image -> 2値マスク(0/1) ndarray(uint8), サイズは対象画像に合わせる"""
     if mask_img.size != size:
         mask_img = mask_img.resize(size, Image.Resampling.LANCZOS)
     m = np.array(mask_img.convert("L"), dtype=np.uint8)
-    # 0/1の2値化（白=1で適用）
+    # 0/1 の二値化（白=1で適用）
     return (m > 32).astype(np.uint8)
 
 
-def rgb_to_hsv_np(rgb):  # rgb: float32 0-1
+def rgb_to_hsv_np(rgb: np.ndarray) -> np.ndarray:
+    """RGB -> HSV (各0-1, float32), 形状は (..., 3) を維持"""
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     maxc = np.max(rgb, axis=-1)
     minc = np.min(rgb, axis=-1)
     v = maxc
+
     s = np.zeros_like(v)
     nz = maxc != 0
     s[nz] = (maxc[nz] - minc[nz]) / maxc[nz]
-    h = np.zeros_like(v)
 
+    h = np.zeros_like(v)
     mask = maxc != minc
+
     rc = np.zeros_like(r)
     gc = np.zeros_like(g)
     bc = np.zeros_like(b)
-    rc[mask] = (maxc[mask] - r[mask]) / (maxc[mask] - minc[mask])
-    gc[mask] = (maxc[mask] - g[mask]) / (maxc[mask] - minc[mask])
-    bc[mask] = (maxc[mask] - b[mask]) / (maxc[mask] - minc[mask])
+    denom = (maxc - minc) + 1e-12  # ゼロ割回避
+    rc[mask] = (maxc[mask] - r[mask]) / denom[mask]
+    gc[mask] = (maxc[mask] - g[mask]) / denom[mask]
+    bc[mask] = (maxc[mask] - b[mask]) / denom[mask]
 
     rmax = (maxc == r) & mask
     gmax = (maxc == g) & mask
     bmax = (maxc == b) & mask
 
     h[rmax] = bc[rmax] - gc[rmax]
-    h[gmax] = 2.0 + (rc[gmax] - bc[gmax])
-    h[bmax] = 4.0 + (gc[bmax] - rc[bmax])
+    h[gmax] = 2.0 + rc[gmax] - bc[gmax]
+    h[bmax] = 4.0 + gc[bmax] - rc[bmax]
+
     h = (h / 6.0) % 1.0
-    return np.stack([h, s, v], axis=-1)
+    return np.stack([h, s, v], axis=-1).astype(np.float32)
 
 
-def hsv_to_rgb_np(hsv):  # hsv: float32 0-1
+def hsv_to_rgb_np(hsv: np.ndarray) -> np.ndarray:
+    """HSV -> RGB (各0-1, float32), 形状は (..., 3) を維持"""
     h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
     c = v * s
     h6 = (h * 6.0) % 6.0
@@ -77,10 +95,11 @@ def hsv_to_rgb_np(hsv):  # hsv: float32 0-1
 
     m = v - c
     rgb = rgbp + np.stack([m, m, m], axis=-1)
-    return rgb
+    return rgb.astype(np.float32)
 
 
-def mask_centroid(mask):
+def mask_centroid(mask: np.ndarray) -> Optional[Tuple[int, int]]:
+    """マスク領域の重心 (x, y) を返す。存在しない場合 None。"""
     ys, xs = np.nonzero(mask)
     if len(xs) == 0:
         return None
@@ -101,23 +120,45 @@ PASTELS = {
 
 
 # ---------- 変換ロジック ----------
-def apply_basic(rgb, mask01, hue, sat, val, keep_value=0.7, sat_scale=1.0):
+
+
+def apply_basic(
+    rgb: np.ndarray,
+    mask01: np.ndarray,
+    hue: float,
+    sat: float,
+    val: float,
+    keep_value: float = 0.7,
+    sat_scale: float = 1.0,
+) -> np.ndarray:
+    """色相だけ置換する基本モード"""
     a = rgb[..., 3:4] / 255.0
     base = rgb[..., :3] / 255.0
+
     hsv = rgb_to_hsv_np(base)
-    # 明度は元:val を重み付け
     hsv[..., 0] = hue
-    hsv[..., 1] = np.clip(sat * sat_scale, 0, 1)
-    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + val * (1 - keep_value), 0, 1)
+    hsv[..., 1] = np.clip(sat * sat_scale, 0.0, 1.0)
+    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + val * (1.0 - keep_value), 0.0, 1.0)
+
     recolor = hsv_to_rgb_np(hsv)
-    mixed = np.where(mask01[..., None] == 1, recolor, base)
-    out = np.concatenate([mixed, a], axis=-1)
-    return np.clip(out * 255, 0, 255).astype(np.uint8)
+    out_rgb = np.where(mask01[..., None] == 1, recolor, base)
+    out = np.concatenate([out_rgb, a], axis=-1)
+    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
 
 
-def apply_gradient(rgb, mask01, hue, sat, val, keep_value=0.7, highlight=0.4):
+def apply_gradient(
+    rgb: np.ndarray,
+    mask01: np.ndarray,
+    hue: float,
+    sat: float,
+    val: float,
+    keep_value: float = 0.7,
+    highlight: float = 0.4,
+) -> np.ndarray:
+    """中心→外周のグラデーション＋上部ハイライト"""
     h, w = mask01.shape
     cxcy = mask_centroid(mask01)
+
     base = rgb[..., :3] / 255.0
     hsv = rgb_to_hsv_np(base)
 
@@ -127,34 +168,50 @@ def apply_gradient(rgb, mask01, hue, sat, val, keep_value=0.7, highlight=0.4):
     cx, cy = cxcy
     yy, xx = np.mgrid[0:h, 0:w]
     dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
-    d_norm = (dist - dist[mask01 == 1].min()) / (dist[mask01 == 1].ptp() + 1e-6)
-    d_norm = np.clip(d_norm, 0, 1)
+
+    # マスク内距離を 0..1 に正規化
+    dist_mask = dist[mask01 == 1]
+    d_norm = (dist - dist_mask.min()) / (dist_mask.ptp() + 1e-6)
+    d_norm = np.clip(d_norm, 0.0, 1.0)
 
     # 内側→外側で彩度/明度を少し変える
-    local_sat = np.clip(sat * (0.85 + 0.3 * (1 - d_norm)), 0, 1)
-    local_val = np.clip(val * (0.9 + 0.2 * (1 - d_norm)), 0, 1)
+    local_sat = np.clip(sat * (0.85 + 0.3 * (1.0 - d_norm)), 0.0, 1.0)
+    local_val = np.clip(val * (0.90 + 0.2 * (1.0 - d_norm)), 0.0, 1.0)
 
     hsv[..., 0] = hue
     hsv[..., 1] = local_sat
-    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1 - keep_value), 0, 1)
+    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0)
 
-    # 上側ハイライト
-    top = yy < cy - 0.05 * h
+    # 上側ハイライト（少しだけ明るく）
+    top = yy < (cy - 0.05 * h)
     hsv[..., 2] = np.where(
-        top & (mask01 == 1), np.clip(hsv[..., 2] + highlight * 0.15, 0, 1), hsv[..., 2]
+        top & (mask01 == 1),
+        np.clip(hsv[..., 2] + highlight * 0.15, 0.0, 1.0),
+        hsv[..., 2],
     )
 
     recolor = hsv_to_rgb_np(hsv)
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     a = rgb[..., 3:4] / 255.0
     out = np.concatenate([out_rgb, a], axis=-1)
-    return np.clip(out * 255, 0, 255).astype(np.uint8)
+    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
 
 
-def apply_aurora(rgb, mask01, hue, sat, val, keep_value=0.7, strength=0.3):
+def apply_aurora(
+    rgb: np.ndarray,
+    mask01: np.ndarray,
+    hue: float,
+    sat: float,
+    val: float,
+    keep_value: float = 0.7,
+    strength: float = 0.3,
+) -> np.ndarray:
+    """波状の色相揺らぎでオーロラ風に"""
     h, w = mask01.shape
+
     base = rgb[..., :3] / 255.0
     hsv = rgb_to_hsv_np(base)
+
     yy, xx = np.mgrid[0:h, 0:w]
     wave = (
         np.sin((xx + yy) * 0.02) * 0.4
@@ -164,49 +221,65 @@ def apply_aurora(rgb, mask01, hue, sat, val, keep_value=0.7, strength=0.3):
     hue_offset = np.clip(wave * strength, -0.15, 0.15)
 
     hsv[..., 0] = (hue + hue_offset) % 1.0
-    hsv[..., 1] = np.clip(sat + (np.sin(xx * 0.01 + yy * 0.015) * 0.1 + 0.1), 0, 0.6)
-    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + val * (1 - keep_value), 0, 1)
+    hsv[..., 1] = np.clip(sat + (np.sin(xx * 0.01 + yy * 0.015) * 0.1 + 0.1), 0.0, 0.6)
+    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + val * (1.0 - keep_value), 0.0, 1.0)
 
     recolor = hsv_to_rgb_np(hsv)
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     a = rgb[..., 3:4] / 255.0
     out = np.concatenate([out_rgb, a], axis=-1)
-    return np.clip(out * 255, 0, 255).astype(np.uint8)
+    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
 
 
-def build_emission(mask01, inner=0.07, outer=0.14, softness=0.06):
+def build_emission(
+    mask01: np.ndarray,
+    inner: float = 0.07,
+    outer: float = 0.14,
+    softness: float = 0.06,
+) -> np.uint8:
+    """瞳孔周辺のリング発光マスク(L)を作成（相対半径指定）"""
     h, w = mask01.shape
     cxcy = mask_centroid(mask01)
     if cxcy is None:
         return (mask01 * 255).astype(np.uint8)
+
     cx, cy = cxcy
     yy, xx = np.mgrid[0:h, 0:w]
     dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
-    r = np.sqrt(np.sum((np.array(np.nonzero(mask01)).ptp(axis=1) / 2) ** 2)) + 1e-6
+
+    # マスク領域の半径目安（重心からの最大距離の近似）
+    ys, xs = np.nonzero(mask01)
+    rx = (xs.max() - xs.min()) / 2.0 + 1e-6
+    ry = (ys.max() - ys.min()) / 2.0 + 1e-6
+    r = float(np.hypot(rx, ry))
+
     d = dist / r
-    # ドーナツ型リング
-    ring = np.clip((d - inner) / max(softness, 1e-6), 0, 1)
-    ring = 1 - np.clip((d - outer) / max(softness, 1e-6), 0, 1) * ring
-    ring = np.clip(ring, 0, 1) * mask01
+
+    # ドーナツ型リング（内外のフェザー付き）
+    ring_in = np.clip((d - inner) / max(softness, 1e-6), 0.0, 1.0)
+    ring_out = 1.0 - np.clip((d - outer) / max(softness, 1e-6), 0.0, 1.0)
+    ring = np.clip(ring_out * (1.0 - ring_in), 0.0, 1.0) * mask01
+
     return (ring * 255).astype(np.uint8)
 
 
 # ---------- 推論関数（Gradioハンドラ） ----------
-def generate(
-    eye_img,
-    mask_img,
-    preset,
-    mode,
-    keep_value,
-    sat_scale,
-    highlight,
-    aurora_strength,
-    make_emission,
-    ring_inner,
-    ring_outer,
-    ring_soft,
-):
 
+
+def generate(
+    eye_img: Image.Image,
+    mask_img: Image.Image,
+    preset: str,
+    mode: str,
+    keep_value: float,
+    sat_scale: float,
+    highlight: float,
+    aurora_strength: float,
+    make_emission: bool,
+    ring_inner: float,
+    ring_outer: float,
+    ring_soft: float,
+):
     if eye_img is None or mask_img is None:
         raise gr.Error("eye_texture と mask の両方をアップロードしてください。")
 
@@ -217,22 +290,43 @@ def generate(
 
     if mode == "Basic":
         out = apply_basic(
-            rgba, mask01, hue, sat, val, keep_value=keep_value, sat_scale=sat_scale
+            rgba,
+            mask01,
+            hue,
+            sat,
+            val,
+            keep_value=keep_value,
+            sat_scale=sat_scale,
         )
     elif mode == "Gradient":
         out = apply_gradient(
-            rgba, mask01, hue, sat, val, keep_value=keep_value, highlight=highlight
+            rgba,
+            mask01,
+            hue,
+            sat,
+            val,
+            keep_value=keep_value,
+            highlight=highlight,
         )
     else:
         out = apply_aurora(
-            rgba, mask01, hue, sat, val, keep_value=keep_value, strength=aurora_strength
+            rgba,
+            mask01,
+            hue,
+            sat,
+            val,
+            keep_value=keep_value,
+            strength=aurora_strength,
         )
 
     out_img = Image.fromarray(out, mode="RGBA")
 
     if make_emission:
         emi = build_emission(
-            mask01, inner=ring_inner, outer=ring_outer, softness=ring_soft
+            mask01,
+            inner=ring_inner,
+            outer=ring_outer,
+            softness=ring_soft,
         )
         emi_img = Image.fromarray(emi, mode="L")
         return out_img, emi_img
@@ -241,6 +335,8 @@ def generate(
 
 
 # ---------- UI ----------
+
+
 with gr.Blocks(title="Pastel Eye Colorizer") as demo:
     gr.Markdown(
         "## Pastel Eye Colorizer｜マスク領域だけパステル化（Basic / Gradient / Aurora）"
@@ -252,10 +348,14 @@ with gr.Blocks(title="Pastel Eye Colorizer") as demo:
 
     with gr.Row():
         preset = gr.Dropdown(
-            choices=list(PASTELS.keys()), value="pastel_cyan", label="パレット"
+            choices=list(PASTELS.keys()),
+            value="pastel_cyan",
+            label="パレット",
         )
         mode = gr.Radio(
-            choices=["Basic", "Gradient", "Aurora"], value="Basic", label="効果モード"
+            choices=["Basic", "Gradient", "Aurora"],
+            value="Basic",
+            label="効果モード",
         )
 
     with gr.Accordion("調整（必要に応じて）", open=False):
@@ -267,13 +367,25 @@ with gr.Blocks(title="Pastel Eye Colorizer") as demo:
             label="明度保持率（元テクスチャをどれだけ残すか）",
         )
         sat_scale = gr.Slider(
-            0.5, 2.0, value=1.0, step=0.05, label="彩度スケール（Basic/Aurora）"
+            0.5,
+            2.0,
+            value=1.0,
+            step=0.05,
+            label="彩度スケール（Basic/Aurora）",
         )
         highlight = gr.Slider(
-            0.0, 1.0, value=0.4, step=0.05, label="ハイライト量（Gradient）"
+            0.0,
+            1.0,
+            value=0.4,
+            step=0.05,
+            label="ハイライト量（Gradient）",
         )
         aurora_strength = gr.Slider(
-            0.0, 0.6, value=0.3, step=0.02, label="オーロラ色揺らぎ（Aurora）"
+            0.0,
+            0.6,
+            value=0.3,
+            step=0.02,
+            label="オーロラ色揺らぎ（Aurora）",
         )
 
     with gr.Accordion("発光マスクを作る（任意）", open=False):
@@ -312,4 +424,6 @@ with gr.Blocks(title="Pastel Eye Colorizer") as demo:
         outputs=[out_img, emi_img],
     )
 
-demo.launch()
+# Hugging Face Spaces / ローカルの両方で利用可能
+if __name__ == "__main__":
+    demo.launch()
