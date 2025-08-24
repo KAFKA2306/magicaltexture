@@ -1,13 +1,14 @@
 ---
 title: Pastel Eye Colorizer
 emoji: 🎨
-colorFrom: cyan
+colorFrom: blue
 colorTo: pink
 sdk: gradio
 sdk_version: "4.0.0"
 app_file: app.py
 pinned: false
 ---
+
 
 
 # magicaltexture へようこそ

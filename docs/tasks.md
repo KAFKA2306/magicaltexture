@@ -14,51 +14,53 @@ Security
 Insights
 Settings
 CI & Deploy to HuggingFace Spaces
-CI & Deploy to HuggingFace Spaces #8
+first commit #11
 Jobs
 Run details
 Annotations
 1 error
 Deploy to HuggingFace Spaces
-failed now in 8s
+failed 1 minute ago in 9s
 Search logs
-0s
+1s
 1s
 0s
-3s
+5s
+0s
 1s
-Run test -n "$HF_TOKEN" || (echo "HF_TOKEN not set" && exit 1)
-  test -n "$HF_TOKEN" || (echo "HF_TOKEN not set" && exit 1)
-  test -n "$HF_SPACE_ID" || (echo "HF_SPACE_ID not set" && exit 1)
-  huggingface-cli login --token "$HF_TOKEN"
-  # 必要なファイルのみ転送（.git/.githubは除外）
-  huggingface-cli upload . \
-    --repo-id "spaces/$HF_SPACE_ID" \
-    --repo-type space \
-    --include "app.py" "requirements.txt" "assets" \
-    --exclude ".git" ".github" --commit-message "CI deploy: $GITHUB_SHA"
-  shell: /usr/bin/bash -e {0}
-  env:
-    pythonLocation: /opt/hostedtoolcache/Python/3.11.13/x64
-    PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.13/x64/lib/pkgconfig
-    Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.13/x64
-    Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.13/x64
-    Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.13/x64
-    LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.13/x64/lib
-    HF_TOKEN: ***
-    HF_SPACE_ID: ***
-The token has not been saved to the git credentials helper. Pass `add_to_git_credential=True` in this function directly or `--add-to-git-credential` if using via `hf`CLI if you want to set the git credential as well.
-Token is valid (permission: write).
-The token `HF_TOKEN` has been saved to /home/runner/.cache/huggingface/stored_tokens
-Your token has been saved to /home/runner/.cache/huggingface/token
-Login successful.
-Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
-⚠️  Warning: 'huggingface-cli login' is deprecated. Use 'hf auth login' instead.
-usage: huggingface-cli <command> [<args>]
-huggingface-cli: error: unrecognized arguments: --repo-id spaces/***
-Error: Process completed with exit code 2.
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 9710, in _validate_yaml
+    hf_raise_for_status(response)
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/utils/_http.py", line 465, in hf_raise_for_status
+    raise _format(BadRequestError, message, response) from e
+huggingface_hub.errors.BadRequestError: (Request ID: Root=1-68aaf032-5f421f174fbdbf39345ef35d;fb96010a-d4f1-410b-b79a-2f95d50d77eb)
+
+Bad request:
+"colorFrom" must be one of [red, yellow, green, blue, indigo, purple, pink, gray]
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<stdin>", line 9, in <module>
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 1669, in _inner
+    return fn(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 4963, in upload_folder
+    add_operations = self._prepare_upload_folder_additions(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 9649, in _prepare_upload_folder_additions
+    self._validate_yaml(
+  File "/opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/huggingface_hub/hf_api.py", line 9714, in _validate_yaml
+    raise ValueError(f"Invalid metadata in README.md.\n{message}") from e
+ValueError: Invalid metadata in README.md.
+- "colorFrom" must be one of [red, yellow, green, blue, indigo, purple, pink, gray]
+Error: Process completed with exit code 1.
 0s
 0s
 0s
 0s
-CI & Deploy to HuggingFace Spaces · KAFKA2306/magicaltexture@25d8b19 
