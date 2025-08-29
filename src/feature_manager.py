@@ -36,8 +36,9 @@ class FeatureManager:
         if not self.feature_flags.get(feature_name, False):
             return False
 
-        if user_group == "staff":
+        allowed = self.user_group_flags.get(user_group)
+        if allowed is None:
+            # Unknown groups inherit globally enabled features
             return True
 
-        allowed = self.user_group_flags.get(user_group, [])
         return feature_name in allowed or "all" in allowed
