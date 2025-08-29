@@ -113,7 +113,7 @@ def apply_basic(
     recolor = hsv_to_rgb_np(hsv)
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     out = np.concatenate([out_rgb, a], axis=-1)
-    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
+    return np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8)
 
 
 def apply_gradient(
@@ -137,28 +137,34 @@ def apply_gradient(
     yy, xx = np.mgrid[0:h, 0:w]
     dist = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
     dist_mask = dist[mask01 == 1]
-    
+
     # Improved distance normalization with smoother falloff
     d_norm = (dist - dist_mask.min()) / (max(dist_mask.ptp(), 1e-6))
     d_norm = np.clip(d_norm, 0.0, 1.0)
-    
+
     # Smooth falloff curve instead of linear - creates more natural gradient
     falloff = 1.0 - np.power(d_norm, 1.2)  # Slight curve for more natural transition
-    
+
     # More subtle saturation/value variation for better visual quality
-    local_sat = np.clip(sat * (0.92 + 0.16 * falloff), 0.0, 1.0)  # Less aggressive variation
-    local_val = np.clip(val * (0.94 + 0.12 * falloff), 0.0, 1.0)  # More subtle brightness change
+    local_sat = np.clip(
+        sat * (0.92 + 0.16 * falloff), 0.0, 1.0
+    )  # Less aggressive variation
+    local_val = np.clip(
+        val * (0.94 + 0.12 * falloff), 0.0, 1.0
+    )  # More subtle brightness change
 
     hsv[..., 0] = hue
     hsv[..., 1] = local_sat
-    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0)
+    hsv[..., 2] = np.clip(
+        hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0
+    )
 
     # Improved highlight system with multiple zones and smoother blending
     # Upper highlight zone (main)
     upper_zone = yy < (cy - 0.03 * h)  # Slightly larger zone
     # Additional subtle rim light
     rim_zone = (d_norm > 0.7) & (d_norm < 0.95)
-    
+
     # Apply highlights with smooth blending
     highlight_strength = highlight * 0.12  # Reduced intensity for subtlety
     hsv[..., 2] = np.where(
@@ -166,7 +172,7 @@ def apply_gradient(
         np.clip(hsv[..., 2] + highlight_strength * (1.0 - d_norm * 0.5), 0.0, 1.0),
         hsv[..., 2],
     )
-    
+
     # Subtle rim lighting for depth
     rim_strength = highlight * 0.08
     hsv[..., 2] = np.where(
@@ -179,7 +185,7 @@ def apply_gradient(
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     a = rgb[..., 3:4] / 255.0
     out = np.concatenate([out_rgb, a], axis=-1)
-    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
+    return np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8)
 
 
 def apply_aurora(
@@ -197,30 +203,30 @@ def apply_aurora(
     hsv = rgb_to_hsv_np(base)
 
     yy, xx = np.mgrid[0:h, 0:w]
-    
+
     # More organic wave patterns with finer detail and better scaling
     # Primary wave (creates main flow)
     wave1 = np.sin((xx * 0.008 + yy * 0.005) * np.pi) * 0.35
-    # Secondary wave (creates shimmer detail)  
+    # Secondary wave (creates shimmer detail)
     wave2 = np.cos((xx * 0.012 - yy * 0.009) * np.pi) * 0.25
     # Tertiary wave (adds subtle complexity)
     wave3 = np.sin((xx * 0.006 + yy * 0.011) * np.pi) * 0.15
-    
+
     # Combine waves for more natural aurora flow
     wave = wave1 + wave2 + wave3
     hue_offset = np.clip(wave * strength, -0.12, 0.12)  # Slightly reduced range
 
     # Apply hue variation with smooth wrapping
     hsv[..., 0] = (hue + hue_offset) % 1.0
-    
+
     # More coherent saturation variation based on base saturation
     sat_wave = np.sin(xx * 0.007 + yy * 0.009) * 0.08 + np.cos(xx * 0.005) * 0.06
     # Keep saturation variation relative to the base and clamp reasonably
     hsv[..., 1] = np.clip(sat * (1.0 + sat_wave), 0.0, min(sat * 1.3, 0.8))
-    
+
     # Value follows the same pattern as basic mode for consistency
     hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + val * (1.0 - keep_value), 0.0, 1.0)
-    
+
     # Add subtle additional brightness variation for aurora glow effect
     brightness_wave = np.sin(xx * 0.009 - yy * 0.007) * 0.04
     hsv[..., 2] = np.clip(hsv[..., 2] + brightness_wave * strength, 0.0, 1.0)
@@ -229,7 +235,7 @@ def apply_aurora(
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     a = rgb[..., 3:4] / 255.0
     out = np.concatenate([out_rgb, a], axis=-1)
-    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
+    return np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8)
 
 
 def build_emission(
