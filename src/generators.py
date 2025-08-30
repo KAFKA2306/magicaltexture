@@ -10,7 +10,14 @@ from typing import List
 import gradio as gr
 from PIL import Image
 
-from .core import load_rgba, load_mask, apply_basic, apply_gradient, apply_aurora, build_emission
+from .core import (
+    load_rgba,
+    load_mask,
+    apply_basic,
+    apply_gradient,
+    apply_aurora,
+    build_emission,
+)
 from .config import PASTELS, PRETTY
 
 
@@ -42,16 +49,24 @@ def generate_single(
     hue, sat, val = PASTELS[preset]
 
     if mode == "Basic":
-        out = apply_basic(rgba, mask01, hue, sat, val, keep_value=keep_value, sat_scale=sat_scale)
+        out = apply_basic(
+            rgba, mask01, hue, sat, val, keep_value=keep_value, sat_scale=sat_scale
+        )
     elif mode == "Gradient":
-        out = apply_gradient(rgba, mask01, hue, sat, val, keep_value=keep_value, highlight=highlight)
+        out = apply_gradient(
+            rgba, mask01, hue, sat, val, keep_value=keep_value, highlight=highlight
+        )
     else:
-        out = apply_aurora(rgba, mask01, hue, sat, val, keep_value=keep_value, strength=aurora_strength)
+        out = apply_aurora(
+            rgba, mask01, hue, sat, val, keep_value=keep_value, strength=aurora_strength
+        )
 
     out_img = Image.fromarray(out, mode="RGBA")
 
     if make_emission:
-        emi = build_emission(mask01, inner=ring_inner, outer=ring_outer, softness=ring_soft)
+        emi = build_emission(
+            mask01, inner=ring_inner, outer=ring_outer, softness=ring_soft
+        )
         emi_img = Image.fromarray(emi, mode="L")
         return out_img, emi_img
 
@@ -91,7 +106,9 @@ def generate_batch(
     with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         # Emission（色非依存）を先に入れておく（任意）
         if make_emission:
-            emi = build_emission(mask01, inner=ring_inner, outer=ring_outer, softness=ring_soft)
+            emi = build_emission(
+                mask01, inner=ring_inner, outer=ring_outer, softness=ring_soft
+            )
             emi_pil = Image.fromarray(emi, mode="L")
             b = io.BytesIO()
             emi_pil.save(b, format="PNG")
@@ -102,28 +119,50 @@ def generate_batch(
             for mode in selected_modes:
                 if mode == "Basic":
                     out = apply_basic(
-                        rgba, mask01, hue, sat, val, keep_value=keep_value, sat_scale=sat_scale
+                        rgba,
+                        mask01,
+                        hue,
+                        sat,
+                        val,
+                        keep_value=keep_value,
+                        sat_scale=sat_scale,
                     )
                 elif mode == "Gradient":
                     out = apply_gradient(
-                        rgba, mask01, hue, sat, val, keep_value=keep_value, highlight=highlight
+                        rgba,
+                        mask01,
+                        hue,
+                        sat,
+                        val,
+                        keep_value=keep_value,
+                        highlight=highlight,
                     )
                 else:  # Aurora
                     out = apply_aurora(
-                        rgba, mask01, hue, sat, val, keep_value=keep_value, strength=aurora_strength
+                        rgba,
+                        mask01,
+                        hue,
+                        sat,
+                        val,
+                        keep_value=keep_value,
+                        strength=aurora_strength,
                     )
 
                 pil = Image.fromarray(out, mode="RGBA")
                 caption = f"{PRETTY.get(ckey, ckey)} · {mode}"
                 gallery_items.append((pil, caption))
 
-                fname = f"{_sanitize(filename_prefix) or 'eye'}_{ckey}_{mode.lower()}.png"
+                fname = (
+                    f"{_sanitize(filename_prefix) or 'eye'}_{ckey}_{mode.lower()}.png"
+                )
                 buf = io.BytesIO()
                 pil.save(buf, format="PNG")
                 zf.writestr(fname, buf.getvalue())
 
     zip_buf.seek(0)
-    zip_path = os.path.join(gr.utils.get_temp_dir(), zip_name)  # Gradioの一時ディレクトリへ保存
+    zip_path = os.path.join(
+        gr.utils.get_temp_dir(), zip_name
+    )  # Gradioの一時ディレクトリへ保存
     with open(zip_path, "wb") as f:
         f.write(zip_buf.read())
 

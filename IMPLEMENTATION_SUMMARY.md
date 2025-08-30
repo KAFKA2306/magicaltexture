@@ -65,6 +65,12 @@ mkdocs.yml                     # Documentation configuration
 - **Technical details**: Algorithm explanations for advanced users
 - **Professional theme**: Material Design with dark/light mode support
 
+### 7. Plugin Architecture and Feature Flags
+- **Pluggable features**: `FeaturePlugin` base class with safe `run` wrapper
+- **Feature toggles**: Lightweight `FeatureManager` for staged rollouts
+- **Isolated demo**: Placeholder `HairTexturePlugin` that fails gracefully
+- **Global defaults**: Unlisted user groups inherit globally enabled features
+
 ## 🚀 Key Improvements
 
 ### User Experience
