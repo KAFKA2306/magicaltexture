@@ -1,7 +1,7 @@
 site_name: Magical Texture - Eye Color Generator
 site_description: Transform eye textures with beautiful pastel colors using advanced image processing
 site_author: Magical Texture Team
-site_url: https://magical-texture.readthedocs.io
+site_url: https://kafka2306.github.io/magicaltexture/
 
 theme:
   name: material
@@ -57,8 +57,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite

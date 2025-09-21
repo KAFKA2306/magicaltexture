@@ -54,9 +54,10 @@ Our carefully curated palette includes:
 ## 📚 Documentation Structure
 
 - **[Getting Started](getting-started/quick-start.md)** - Jump right in with our quick start guide
-- **[User Guide](user-guide/colors.md)** - Deep dive into colors, effects, and features
-- **[Advanced](advanced/technical.md)** - Technical details and API reference
-- **[Examples](examples/gallery.md)** - See what's possible with our gallery and tutorials
+- **[Technical Requirements](requirements.md)** - Installation notes and dependency details
+- **[Design Overview](design.md)** - Deep dive into the processing pipeline
+- **[Development Tasks](tasks.md)** - Current roadmap and contributor checklist
+- **[Known Issues](ourfailures.md)** - Documented limitations and fixes in progress
 - **[FAQ](faq.md)** - Common questions and troubleshooting
 
 ## 🛠️ Technical Features

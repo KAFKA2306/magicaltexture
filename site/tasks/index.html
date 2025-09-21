@@ -12,7 +12,7 @@
         <meta name="author" content="Magical Texture Team">
       
       
-        <link rel="canonical" href="https://magical-texture.readthedocs.io/tasks/">
+        <link rel="canonical" href="https://kafka2306.github.io/magicaltexture/tasks/">
       
       
         <link rel="prev" href="../design/">
@@ -78,11 +78,6 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
-      
-        
-        <a href="#_1" class="md-skip">
-          Skip to content
-        </a>
       
     </div>
     <div data-md-component="announce">
@@ -542,8 +537,6 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
-        
-      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -631,8 +624,6 @@
   
   
   
-    
-  
   
 </nav>
                   </div>
@@ -648,98 +639,14 @@
 
 
 
-<h1 id="_1">パステルカラーにグラデーション効果を追加<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>print("🎨 グラデーション効果付きパステルカラー作成開始!")
-print("=" * 50)</p>
-<p>gradient_files = []
-center_x, center_y = 540, 540</p>
-<h1 id="4">人気の高そうなパステル4色を選んでグラデーション効果<a class="headerlink" href="#4" title="Permanent link">&para;</a></h1>
-<p>gradient_colors = ['pink', 'lavender', 'mint', 'peach']</p>
-<p>for color_key in gradient_colors:
-    color_info = pastel_colors[color_key]
-    print(f"グラデーション効果適用中: {color_info['name']}")</p>
-<div class="codehilite"><pre><span></span><code><span class="err">#</span><span class="w"> </span><span class="n">結果配列を作成</span>
-<span class="n">gradient_array</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eye_array</span><span class="p">.</span><span class="n">copy</span><span class="p">()</span>
+  <h1>Development Tasks</h1>
 
-<span class="err">#</span><span class="w"> </span><span class="n">グラデーション用の色のバリエーション</span>
-<span class="n">base_hue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;hue&#39;</span><span class="o">]</span>
-<span class="n">colors_gradient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span>
-<span class="n">    # 内側（明るめ）</span>
-<span class="n">    colorsys.hsv_to_rgb(base_hue, max(0.1, color_info[&#39;sat&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.1</span><span class="p">),</span><span class="w"> </span><span class="nf">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;val&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.05</span><span class="p">)),</span>
-<span class="w">    </span><span class="err">#</span><span class="w"> </span><span class="n">中間</span><span class="err">（</span><span class="n">ベース色</span><span class="err">）</span>
-<span class="w">    </span><span class="n">colorsys</span><span class="p">.</span><span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;sat&#39;</span><span class="o">]</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;val&#39;</span><span class="o">]</span><span class="p">),</span>
-<span class="w">    </span><span class="err">#</span><span class="w"> </span><span class="n">外側</span><span class="err">（</span><span class="n">少し深め</span><span class="err">）</span>
-<span class="w">    </span><span class="n">colorsys</span><span class="p">.</span><span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span><span class="w"> </span><span class="nf">min</span><span class="p">(</span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;sat&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.1</span><span class="p">),</span><span class="w"> </span><span class="nf">max</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;val&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.1</span><span class="p">)),</span>
-<span class="w">    </span><span class="err">#</span><span class="w"> </span><span class="n">ハイライト</span><span class="err">（</span><span class="n">とても明るい</span><span class="err">）</span>
-<span class="w">    </span><span class="n">colorsys</span><span class="p">.</span><span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">base_hue</span><span class="p">,</span><span class="w"> </span><span class="nf">max</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;sat&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.15</span><span class="p">),</span><span class="w"> </span><span class="nf">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="n">color_info</span><span class="o">[</span><span class="n">&#39;val&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.1</span><span class="p">))</span>
-<span class="err">]</span>
-
-<span class="err">#</span><span class="w"> </span><span class="n">RGBに変換</span>
-<span class="n">colors_gradient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">tuple(int(c * 255) for c in rgb) for rgb in colors_gradient</span><span class="o">]</span>
-
-<span class="k">for</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">range</span><span class="p">(</span><span class="n">eye_array</span><span class="p">.</span><span class="n">shape</span><span class="o">[</span><span class="n">0</span><span class="o">]</span><span class="p">)</span><span class="err">:</span>
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">range</span><span class="p">(</span><span class="n">eye_array</span><span class="p">.</span><span class="n">shape</span><span class="o">[</span><span class="n">1</span><span class="o">]</span><span class="p">)</span><span class="err">:</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">mask_array</span><span class="o">[</span><span class="n">y, x</span><span class="o">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">50</span><span class="err">:</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="n">マスクされた領域</span>
-<span class="w">            </span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">np</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">((</span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">center_x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">center_y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-
-<span class="w">            </span><span class="err">#</span><span class="w"> </span><span class="n">元の色の明度を取得</span>
-<span class="w">            </span><span class="n">original_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eye_array</span><span class="o">[</span><span class="n">y, x</span><span class="o">][</span><span class="n">:3</span><span class="o">]</span>
-<span class="w">            </span><span class="n">original_brightness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">original_color</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">255.0</span>
-<span class="w">            </span><span class="n">alpha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eye_array</span><span class="o">[</span><span class="n">y, x</span><span class="o">][</span><span class="n">3</span><span class="o">]</span>
-
-<span class="w">            </span><span class="err">#</span><span class="w"> </span><span class="n">距離に基づく色のブレンディング</span>
-<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">80</span><span class="err">:</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="n">内側</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">明るいパステル</span>
-<span class="w">                </span><span class="n">base_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">colors_gradient</span><span class="o">[</span><span class="n">0</span><span class="o">]</span>
-<span class="w">            </span><span class="n">elif</span><span class="w"> </span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">120</span><span class="err">:</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="n">中間</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ベース色</span>
-<span class="w">                </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">80</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">40</span>
-<span class="w">                </span><span class="n">base_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span>
-<span class="n">                    int(colors_gradient[0</span><span class="o">][</span><span class="n">i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">colors_gradient</span><span class="o">[</span><span class="n">1</span><span class="o">][</span><span class="n">i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span>
-<span class="w">                    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="w">                </span><span class="err">]</span>
-<span class="w">            </span><span class="n">elif</span><span class="w"> </span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">160</span><span class="err">:</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="n">外側</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">深め</span>
-<span class="w">                </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">120</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">40</span>
-<span class="w">                </span><span class="n">base_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span>
-<span class="n">                    int(colors_gradient[1</span><span class="o">][</span><span class="n">i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">colors_gradient</span><span class="o">[</span><span class="n">2</span><span class="o">][</span><span class="n">i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span>
-<span class="w">                    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="w">                </span><span class="err">]</span>
-<span class="w">            </span><span class="k">else</span><span class="err">:</span><span class="w">  </span><span class="err">#</span><span class="w"> </span><span class="n">最外側</span>
-<span class="w">                </span><span class="n">base_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">colors_gradient</span><span class="o">[</span><span class="n">2</span><span class="o">]</span>
-
-<span class="w">            </span><span class="err">#</span><span class="w"> </span><span class="n">ハイライト効果</span><span class="err">（</span><span class="n">上部</span><span class="err">）</span>
-<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">center_y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">30</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">distance_from_center</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">120</span><span class="err">:</span>
-<span class="w">                </span><span class="n">highlight_strength</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">center_y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">30</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.6</span>
-<span class="w">                </span><span class="n">base_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span>
-<span class="n">                    int(base_color[i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">highlight_strength</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">colors_gradient</span><span class="o">[</span><span class="n">3</span><span class="o">][</span><span class="n">i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">highlight_strength</span><span class="p">)</span>
-<span class="w">                    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="w">                </span><span class="err">]</span>
-
-<span class="w">            </span><span class="err">#</span><span class="w"> </span><span class="n">元の明度を70</span><span class="o">%</span><span class="n">保持</span>
-<span class="w">            </span><span class="n">final_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span>
-<span class="n">                int(base_color[i</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">0.3</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">original_brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.7</span><span class="p">))</span>
-<span class="w">                </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="w">            </span><span class="err">]</span>
-<span class="w">            </span><span class="n">final_color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">max(0, min(255, c)) for c in final_color</span><span class="o">]</span>
-
-<span class="w">            </span><span class="n">gradient_array</span><span class="o">[</span><span class="n">y, x</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">final_color</span><span class="p">,</span><span class="w"> </span><span class="n">alpha</span><span class="p">)</span>
-
-<span class="err">#</span><span class="w"> </span><span class="n">グラデーション版を保存</span>
-<span class="n">gradient_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">f</span><span class="s1">&#39;eye_color_pastel_{color_key}_gradient.png&#39;</span>
-<span class="n">gradient_image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Image</span><span class="p">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">gradient_array</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;RGBA&#39;</span><span class="p">)</span>
-<span class="n">gradient_image</span><span class="p">.</span><span class="k">save</span><span class="p">(</span><span class="n">gradient_filename</span><span class="p">)</span>
-<span class="n">gradient_files</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">gradient_filename</span><span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="ss">&quot;✓ グラデーション版完了: {gradient_filename}&quot;</span><span class="p">)</span>
-</code></pre></div>
-
-<p>print(f"\n✨ グラデーション効果付きパステル {len(gradient_files)}色完了!")</p>
-<hr />
-<p>これらの生成なども一括で行って、一覧表示や一括ダウンロードできるようにしましょう
-全文コーディングしましょう。
-モード選択は、ユーザーが理解できるように作る。
-app.py1ファイルにすべてを書く必要はない。管理しやすいように論理的に適切なファイル数に分割するのもよい。
-対象ユーザーは特に専門用語を理解していないので、説明するといい。どんなふうに変化するのか。
-mkdocsで説明書も作るといい。
-色の種類に濃い目の青も追加しよう。</p>
+<p>効果モードの
+Gradient, Auroraの生成結果の見た目がよくない。
+考え直そう。
+localでも実施してみて結果から判断しよう
+.pngs/を使って生成してみよう。
+自分でフィードバックループで改善しよう</p>
 
 
 

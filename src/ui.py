@@ -8,13 +8,15 @@ from .generators import generate_single, generate_batch
 
 def create_ui():
     """Create and return the Gradio interface"""
-    
+
     # Create dropdown choices with pretty names
     color_choices = [(PRETTY[key], key) for key in PASTELS.keys()]
-    color_keys = list(PASTELS.keys())
-    
+
     with gr.Blocks(title="Pastel Eye Colorizer — 単発/一括") as demo:
-        gr.Markdown("# 🎨 Magical Texture - Eye Color Generator\n### Transform eye textures with beautiful pastel colors and artistic effects!")
+        gr.Markdown(
+            "# 🎨 Magical Texture - Eye Color Generator\n"
+            "### Transform eye textures with beautiful pastel colors and artistic effects!"
+        )
 
         with gr.Tab("🎯 Single Generation"):
             with gr.Row():
@@ -26,10 +28,37 @@ def create_ui():
                 mode = gr.Radio(choices=["Basic", "Gradient", "Aurora"], value="Gradient", label="🎭 Effect Mode")
 
             with gr.Accordion("⚙️ Advanced Settings", open=False):
-                keep_value = gr.Slider(0.0, 1.0, value=0.7, step=0.05, label="💡 Original Brightness (How much original texture to preserve)")
-                sat_scale = gr.Slider(0.5, 2.0, value=1.0, step=0.05, label="🌈 Color Intensity (Basic/Aurora modes)")
-                highlight = gr.Slider(0.0, 1.0, value=0.4, step=0.05, label="✨ Highlight Strength (Gradient mode)")
-                aurora_strength = gr.Slider(0.0, 0.6, value=0.3, step=0.02, label="🌌 Aurora Shimmer (Aurora mode)")
+                keep_value = gr.Slider(
+                    minimum=0.0,
+                    maximum=1.0,
+                    value=0.7,
+                    step=0.05,
+                    label=(
+                        "💡 Original Brightness "
+                        "(How much original texture to preserve)"
+                    ),
+                )
+                sat_scale = gr.Slider(
+                    minimum=0.5,
+                    maximum=2.0,
+                    value=1.0,
+                    step=0.05,
+                    label="🌈 Color Intensity (Basic/Aurora modes)",
+                )
+                highlight = gr.Slider(
+                    minimum=0.0,
+                    maximum=1.0,
+                    value=0.4,
+                    step=0.05,
+                    label="✨ Highlight Strength (Gradient mode)",
+                )
+                aurora_strength = gr.Slider(
+                    minimum=0.0,
+                    maximum=0.6,
+                    value=0.3,
+                    step=0.02,
+                    label="🌌 Aurora Shimmer (Aurora mode)",
+                )
 
             with gr.Accordion("💫 Emission Mask (For 3D/Glow Effects)", open=False):
                 make_emission = gr.Checkbox(value=False, label="Generate emission mask for glow effects")
@@ -38,7 +67,7 @@ def create_ui():
                 ring_soft = gr.Slider(0.01, 0.30, value=0.06, step=0.01, label="Ring Softness")
 
             run_btn = gr.Button("🚀 Generate My Eye Color!", variant="primary", size="lg")
-            
+
             with gr.Row():
                 out_img = gr.Image(type="pil", label="✨ Generated Eye Texture")
                 emi_img = gr.Image(type="pil", label="💫 Emission Mask (Optional)")
@@ -77,7 +106,11 @@ def create_ui():
                 value=["Gradient"],
                 label="🎭 Batch Effect Selection (Multiple)",
             )
-            filename_prefix = gr.Textbox(value="eye_color", label="📁 Output Filename Prefix", placeholder="e.g., eye_color")
+            filename_prefix = gr.Textbox(
+                value="eye_color",
+                label="📁 Output Filename Prefix",
+                placeholder="e.g., eye_color",
+            )
 
             with gr.Accordion("⚙️ Advanced Settings", open=False):
                 keep_value_b = gr.Slider(0.0, 1.0, value=0.7, step=0.05, label="💡 Original Brightness")

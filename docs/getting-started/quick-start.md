@@ -10,7 +10,7 @@ Before we start, make sure you have:
 2. **A mask image** (black and white - white areas will be colored)
 
 !!! info "Don't have a mask?"
-    Check out our [Creating Masks Tutorial](../examples/tutorials.md#creating-masks) to learn how to make one in any image editor!
+    Paint a quick mask by filling the iris area with white and everything else with black in your favourite image editor (Photoshop, Krita, Clip Studio, etc.). We keep the process lightweight so any editor that supports layers will work.
 
 ## Step 1: Upload Your Images
 
@@ -58,7 +58,7 @@ Ready to do more? Try these:
 ## Need Help?
 
 - **Something not working?** Check our [FAQ](../faq.md)
-- **Want to learn more about effects?** Read the [Effect Modes Guide](../user-guide/effects.md)
-- **Ready for advanced features?** Explore [Batch Processing](../user-guide/batch-processing.md)
+- **Want to learn more about the algorithms?** Dive into the [Design Overview](../design.md)
+- **Ready for advanced features?** Use the Batch Generation tab above to export multiple looks at once
 
 Happy creating! ✨
