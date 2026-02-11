@@ -1,1 +1,0 @@
-# src package for Magical Texture modular structure
