@@ -9,69 +9,150 @@ app_file: app.py
 pinned: false
 ---
 
+# magicaltexture — VRChat向け瞳テクスチャ色変換
 
+**Webアプリ:** https://k4fka-magicaltexture.hf.space
 
-# magicaltexture へようこそ
+**Hugging Face Space:** https://huggingface.co/spaces/k4fka/magicaltexture
 
-- 利用URL（実行サブドメイン）: https://k4fka-magicaltexture.hf.space
-- スペースページ（紹介/埋め込み表示）: https://huggingface.co/spaces/k4fka/magicaltexture
+**使い方ガイド:** https://kafka2306.github.io/magicaltexture/
 
-使い方
-- 上の実行URLにアクセスして、テクスチャとマスクをアップロードし、好みのパステルカラーや効果を選ぶだけで生成・ダウンロードできる。ブラウザだけで動作するため、インストールは不要。
+元の瞳テクスチャと白黒マスクを入力し、虹彩部分へパステルカラー、グラデーション、オーロラ風の色変化を適用するGradioアプリです。必要に応じてEmission用のグレースケールマスクも生成します。
 
-![howtouse1](mkdocs/image.png)
+## できること
 
+- 瞳テクスチャの明るさを残した色変換
+- パステルカラーパレットの選択
+- Basic / Gradient / Auroraモード
+- 彩度と明度保持率の調整
+- 発光用リングマスクの生成
+- RGBA PNGでの出力
+- ブラウザ上での実行
 
-# 使い方クイックガイド（README 追記用）
+## 入力
 
-https://kafka2306.github.io/magicaltexture/
+### Eye Texture
 
-## 1) マスクの作り方（超かんたん版）
-- 目的: 瞳の「色を変えたい部分＝虹彩」を白、その他を黒にした白黒マスクを作る
-- 手順
-  1. 目のテクスチャ画像（PNG 推奨）を画像編集ソフトで開く（Photoshop/GIMP/ClipStudio など）
-  2. 新規レイヤーを作成し、虹彩（黒目の周りの模様の領域）を白で塗る
-     - まぶた・まつ毛・白目（強膜）・影は含めない
-     - 両目が並んだテクスチャなら、左右それぞれの虹彩を白で塗る
-  3. 2 で塗っていない部分はすべて黒で塗りつぶす（大雑把でOK）
-  4. 境界がカクつく場合は、ガウスぼかし 1–2px を軽く当てると自然
-  5. 元のテクスチャと同じ解像度・同じ位置合わせで、8bit グレースケールPNGとして保存
-     - キャンバスサイズは元画像と同一にする（本アプリ側でも自動リサイズはするが、同一サイズが最も確実）
+元の瞳テクスチャです。PNGのRGBまたはRGBA画像を推奨します。
 
-## 2) アップロードのやり方
-- Eye Texture: 元の目テクスチャ（RGB/RGBA）
-- Mask: 上で作った白黒マスク（白＝適用／黒＝非適用）
-- パレットとモードを選ぶ
-  - パレット: pastel_cyan / pink / lavender / mint / peach / lemon / coral / sky
-  - 効果モード: Basic（色置換）／Gradient（中心→外周グラデ＋上部ハイライト）／Aurora（色相ゆらぎ）
-- 必要に応じて調整
-  - 明度保持率 keep_value（元の明るさをどれだけ残すか）
-  - 彩度スケール sat_scale（鮮やかさの微調整。くすむ時は 1.1–1.3）
-  - Gradient のハイライト量、Aurora の揺らぎ強度
-- 発光を使う場合は「Emissionマスクを出力」をオンにしてリングの内外半径／ぼかしを調整
-- 「生成する」を押す
+### Mask
 
-## 3) 結果の受け取り方
-- 画面下部に「出力テクスチャ（PNG）」が表示される
-  - 画像右上のダウンロードアイコンから RGBA PNG を保存
-- 「Emissionマスク（任意）」をオンにしていた場合は、8bit グレースケールPNGも同様に保存
-- ファイル名例
-  - eye_color_pastel_mint_gradient.png
-  - eye_emission_mask.png
+適用範囲を示す白黒画像です。
 
-## 4) Unity（lilToon）での適用
-- 前提: 生成した PNG を Unity プロジェクトへインポート
-- マテリアル設定
-  1. lilToon のマテリアルを作成（Shader: lilToon）
-  2. Main Texture（Albedo）に「出力テクスチャ（PNG）」を割り当て
-     - マテリアルの色（Color）は白にして色味を変えない
-  3. 目メッシュ（Renderer）にこのマテリアルを割り当て
-- Emission（発光）を使う場合
-  1. マテリアルの「Emission」を有効化（Use Emission）
-  2. Emission Mask（または Emission Map/Mask のスロット）に「Emissionマスク（PNG）」を割り当て
-  3. Emission Color を HDR で好みの色に設定、Intensity/Strength を上げて発光量を調整
-     - まずは Color を白～ややシアン、Intensity 1–3 程度から調整開始
-- 仕上がりが暗い／薄いときの対処
-  - 生成時に sat_scale を上げる（1.1–1.3）
-  - keep_value を少し下げて（0.6 前後）パステル側の明るさを寄与
-  - マスク縁が目立つ場合はマスク境界を 1–2px ぼかす
+```text
+白 = 色変換する領域
+黒 = 元の色を保持する領域
+灰色 = 部分的に適用する境界
+```
+
+元テクスチャと同じ解像度・配置で作成するのが最も安全です。
+
+## マスクの作り方
+
+1. Photoshop、GIMP、Clip Studio Paintなどで元テクスチャを開く
+2. 新しいレイヤーを作る
+3. 虹彩だけを白で塗る
+4. 白目、まぶた、まつ毛、影などは黒にする
+5. 必要に応じて境界へ1〜2px程度のぼかしを加える
+6. 元画像と同じキャンバスサイズで8bitグレースケールPNGとして保存する
+
+左右の目が同じテクスチャ内にある場合は、両方の虹彩を同じ位置関係でマスクしてください。
+
+## 使い方
+
+1. Webアプリを開く
+2. `Eye Texture`へ元画像をアップロードする
+3. `Mask`へ白黒マスクをアップロードする
+4. パレットを選ぶ
+5. 効果モードを選ぶ
+6. `keep_value`と`sat_scale`を調整する
+7. 必要な場合はEmissionマスク出力を有効にする
+8. 生成を実行する
+9. 出力PNGを保存する
+
+## 主な設定
+
+### パレット
+
+```text
+pastel_cyan
+pink
+lavender
+mint
+peach
+lemon
+coral
+sky
+```
+
+### 効果モード
+
+- **Basic** — 指定色への基本変換
+- **Gradient** — 中心から外周への色変化とハイライト
+- **Aurora** — 色相を周期的に変化させる効果
+
+### 調整値
+
+- `keep_value` — 元画像の明度をどの程度残すか
+- `sat_scale` — 彩度の倍率
+- Gradientのハイライト量
+- Auroraの揺らぎ強度
+- Emissionリングの内径・外径・ぼかし
+
+値を大きくすると必ず良くなるわけではありません。元画像とマスクを見ながら調整してください。
+
+## Unity / lilToonで使う
+
+1. 生成したPNGをUnityへインポートする
+2. lilToonマテリアルのMain Textureへ設定する
+3. マテリアルのColorは白を基準にする
+4. 目メッシュのRendererへ割り当てる
+5. Play Modeで左右、UV、透明度を確認する
+
+Emissionを使う場合:
+
+1. lilToonのEmissionを有効にする
+2. 生成したEmissionマスクを対応スロットへ設定する
+3. HDRのEmission Colorと強度を調整する
+4. 暗所・明所・Bloom有無で確認する
+
+lilToonの設定名はバージョンによって変わる可能性があるため、使用中の公式ドキュメントを確認してください。
+
+## 仕上がりの調整
+
+### 色が薄い
+
+- `sat_scale`を少し上げる
+- マスクの白領域を確認する
+- Unity側のMaterial Colorを白へ戻す
+
+### 暗い
+
+- `keep_value`を調整する
+- 元テクスチャの陰影が強すぎないか確認する
+- Unity側のライティングとEmissionを確認する
+
+### マスク境界が目立つ
+
+- マスクへ軽いぼかしを加える
+- 元画像とマスクの解像度・位置を一致させる
+- アルファ境界を確認する
+
+## 権利・プライバシー
+
+- アップロードするテクスチャの利用規約を確認してください
+- 購入アバターのテクスチャを、許諾なく公開・共有しないでください
+- Hugging Face Spaceへ送信する画像に機密情報を含めないでください
+- 生成物の再配布・商用利用可否は元テクスチャの規約に従います
+
+## ローカル実行
+
+リポジトリの依存関係を導入し、Gradioアプリを起動します。
+
+```bash
+python app.py
+```
+
+実際のPython版と依存関係は、Spaceの設定とリポジトリ内の依存ファイルを正としてください。
+
+**README最終監査:** 2026-08-01
