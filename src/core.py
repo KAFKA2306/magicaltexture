@@ -2,15 +2,21 @@ from __future__ import annotations
 from typing import Optional, Tuple
 import numpy as np
 from PIL import Image
+
+
 def load_rgba(img: Image.Image) -> np.ndarray:
     """PIL Image -> RGBA ndarray(uint8)"""
     return np.array(img.convert("RGBA"), dtype=np.uint8)
+
+
 def load_mask(mask_img: Image.Image, size: Tuple[int, int]) -> np.ndarray:
     """PIL Image -> 2値マスク(0/1) ndarray(uint8), サイズは対象画像に合わせる"""
     if mask_img.size != size:
         mask_img = mask_img.resize(size, Image.Resampling.LANCZOS)
     m = np.array(mask_img.convert("L"), dtype=np.uint8)
     return (m > 32).astype(np.uint8)
+
+
 def rgb_to_hsv_np(rgb: np.ndarray) -> np.ndarray:
     """RGB -> HSV (各0-1, float32), 形状は (..., 3) を維持"""
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
@@ -37,6 +43,8 @@ def rgb_to_hsv_np(rgb: np.ndarray) -> np.ndarray:
     h[bmax] = 4.0 + gc[bmax] - rc[bmax]
     h = (h / 6.0) % 1.0
     return np.stack([h, s, v], axis=-1).astype(np.float32)
+
+
 def hsv_to_rgb_np(hsv: np.ndarray) -> np.ndarray:
     """HSV -> RGB (各0-1, float32), 形状は (..., 3) を維持"""
     h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
@@ -68,12 +76,16 @@ def hsv_to_rgb_np(hsv: np.ndarray) -> np.ndarray:
     m = v - c
     rgb = rgbp + np.stack([m, m, m], axis=-1)
     return rgb.astype(np.float32)
+
+
 def mask_centroid(mask: np.ndarray) -> Optional[Tuple[int, int]]:
     """マスク領域の重心 (x, y) を返す。存在しない場合 None。"""
     ys, xs = np.nonzero(mask)
     if len(xs) == 0:
         return None
     return int(xs.mean()), int(ys.mean())
+
+
 def apply_basic(
     rgb: np.ndarray,
     mask01: np.ndarray,
@@ -93,7 +105,9 @@ def apply_basic(
     recolor = hsv_to_rgb_np(hsv)
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     out = np.concatenate([out_rgb, a], axis=-1)
-    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
+    return np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8)
+
+
 def apply_gradient(
     rgb: np.ndarray,
     mask01: np.ndarray,
@@ -121,7 +135,9 @@ def apply_gradient(
     local_val = np.clip(val * (0.94 + 0.12 * falloff), 0.0, 1.0)
     hsv[..., 0] = hue
     hsv[..., 1] = local_sat
-    hsv[..., 2] = np.clip(hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0)
+    hsv[..., 2] = np.clip(
+        hsv[..., 2] * keep_value + local_val * (1.0 - keep_value), 0.0, 1.0
+    )
     upper_zone = yy < (cy - 0.03 * h)
     rim_zone = (d_norm > 0.7) & (d_norm < 0.95)
     highlight_strength = highlight * 0.12
@@ -140,7 +156,9 @@ def apply_gradient(
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     a = rgb[..., 3:4] / 255.0
     out = np.concatenate([out_rgb, a], axis=-1)
-    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
+    return np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8)
+
+
 def apply_aurora(
     rgb: np.ndarray,
     mask01: np.ndarray,
@@ -170,7 +188,9 @@ def apply_aurora(
     out_rgb = np.where(mask01[..., None] == 1, recolor, base)
     a = rgb[..., 3:4] / 255.0
     out = np.concatenate([out_rgb, a], axis=-1)
-    return (np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8))
+    return np.clip(out * 255.0, 0.0, 255.0).astype(np.uint8)
+
+
 def build_emission(
     mask01: np.ndarray,
     inner: float = 0.07,
