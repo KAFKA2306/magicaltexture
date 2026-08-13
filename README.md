@@ -9,15 +9,21 @@ app_file: app.py
 pinned: false
 ---
 
-# magicaltexture — VRChat向け瞳テクスチャ色変換
+# magicaltexture
+
+**瞳の色を変えたいだけなのに、元の明るさや影、発光まで壊したくない。**
+
+画像全体へ単純に色を重ねると、白目やまつ毛まで染まったり、元テクスチャの陰影が消えたりします。必要なのは「どこを変えるか」をマスクで限定し、元の明度をどこまで残すかを調整しながら、色だけを変えることです。
+
+magicaltextureは、元の瞳テクスチャと白黒マスクから、虹彩部分へパステルカラー、グラデーション、オーロラ風の色変化を適用するWebアプリです。その意味を示した後で、Gradio、RGBA PNG、`keep_value`、Emissionなどの技術語を使います。
+
+READMEの入口は [`KAFKA2306/articles#34`](https://github.com/KAFKA2306/articles/issues/34) の「広い問題 → 具体例 → 技術」の編集原則を維持します。元画像とマスクの役割、明度保持、Emission出力を混同せず、Unity/lilToon側の設定は使用中の公式仕様を確認します。
 
 **Webアプリ:** https://k4fka-magicaltexture.hf.space
 
 **Hugging Face Space:** https://huggingface.co/spaces/k4fka/magicaltexture
 
 **使い方ガイド:** https://kafka2306.github.io/magicaltexture/
-
-元の瞳テクスチャと白黒マスクを入力し、虹彩部分へパステルカラー、グラデーション、オーロラ風の色変化を適用するGradioアプリです。必要に応じてEmission用のグレースケールマスクも生成します。
 
 ## できること
 
@@ -155,4 +161,4 @@ python app.py
 
 実際のPython版と依存関係は、Spaceの設定とリポジトリ内の依存ファイルを正としてください。
 
-**README最終監査:** 2026-08-01
+**README最終監査:** 2026-08-13
