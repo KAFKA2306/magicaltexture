@@ -15,9 +15,7 @@ pinned: false
 
 画像全体へ単純に色を重ねると、白目やまつ毛まで染まったり、元テクスチャの陰影が消えたりします。必要なのは「どこを変えるか」をマスクで限定し、元の明度をどこまで残すかを調整しながら、色だけを変えることです。
 
-magicaltextureは、元の瞳テクスチャと白黒マスクから、虹彩部分へパステルカラー、グラデーション、オーロラ風の色変化を適用するWebアプリです。その意味を示した後で、Gradio、RGBA PNG、`keep_value`、Emissionなどの技術語を使います。
-
-READMEの入口は [`KAFKA2306/articles#34`](https://github.com/KAFKA2306/articles/issues/34) の「広い問題 → 具体例 → 技術」の編集原則を維持します。元画像とマスクの役割、明度保持、Emission出力を混同せず、Unity/lilToon側の設定は使用中の公式仕様を確認します。
+magicaltextureは、元の瞳テクスチャと白黒マスクから、虹彩部分へパステルカラー、グラデーション、オーロラ風の色変化を適用するWebアプリです。Gradio上でRGBA PNGを扱い、`keep_value`で明度保持を調整し、必要に応じてEmission用マスクも生成します。
 
 **Webアプリ:** https://k4fka-magicaltexture.hf.space
 
@@ -160,5 +158,3 @@ python app.py
 ```
 
 実際のPython版と依存関係は、Spaceの設定とリポジトリ内の依存ファイルを正としてください。
-
-**README最終監査:** 2026-08-13
