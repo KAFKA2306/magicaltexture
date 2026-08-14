@@ -9,152 +9,167 @@ app_file: app.py
 pinned: false
 ---
 
-# magicaltexture
+# magicaltexture — Pastel Eye Colorizer
 
-**瞳の色を変えたいだけなのに、元の明るさや影、発光まで壊したくない。**
+**瞳の色を変えたいだけなのに、元の明るさ・影・透明感まで壊したくない。**
 
-画像全体へ単純に色を重ねると、白目やまつ毛まで染まったり、元テクスチャの陰影が消えたりします。必要なのは「どこを変えるか」をマスクで限定し、元の明度をどこまで残すかを調整しながら、色だけを変えることです。
+`magicaltexture` は、元テクスチャと白黒maskを使って虹彩だけをrecolorし、**元の陰影を残しながら「どこを・どの程度変えたか」を自分で調整できるWeb tool**です。
 
-magicaltextureは、元の瞳テクスチャと白黒マスクから、虹彩部分へパステルカラー、グラデーション、オーロラ風の色変化を適用するWebアプリです。Gradio上でRGBA PNGを扱い、`keep_value`で明度保持を調整し、必要に応じてEmission用マスクも生成します。
+- Web app: https://k4fka-magicaltexture.hf.space
+- Hugging Face Space: https://huggingface.co/spaces/k4fka/magicaltexture
+- Guide: https://kafka2306.github.io/magicaltexture/
 
-**Webアプリ:** https://k4fka-magicaltexture.hf.space
+## Vision
 
-**Hugging Face Space:** https://huggingface.co/spaces/k4fka/magicaltexture
+avatar texture editingを「色を重ねて、Unityで開いて、壊れていたらやり直す」作業から、**ブラウザ上で変更範囲と明度保持を調整し、元の表情を残したまま色だけを試せる体験**へ変えます。
 
-**使い方ガイド:** https://kafka2306.github.io/magicaltexture/
+## Design philosophy
 
-## できること
+- **Mask before effect.** 画像全体へ色を掛けず、変更領域をexplicit maskで限定する。
+- **Preserve luminance when possible.** 元textureの陰影・highlightを`keep_value`で残せるようにする。
+- **User controls the trade-off.** saturationや明度保持率を自動最適化のblack boxへ隠さない。
+- **RGBA in, RGBA out.** avatar textureとして再利用しやすいformatを維持する。
+- **Emission is optional.** 発光表現をbase recolorと混ぜず、必要な場合だけmaskを生成する。
+- **Local appearance still needs Unity review.** PNG生成成功をavatar上の見た目成功へ読み替えない。
+- **Source rights stay with the source.** 購入textureの規約を生成toolが上書きしない。
 
-- 瞳テクスチャの明るさを残した色変換
-- パステルカラーパレットの選択
-- Basic / Gradient / Auroraモード
-- 彩度と明度保持率の調整
-- 発光用リングマスクの生成
-- RGBA PNGでの出力
-- ブラウザ上での実行
+## Why / 差別化
 
-## 入力
+単純なhue shiftやcolor overlayは速い一方、白目・まつ毛・shadowまで染めたり、元textureの立体感を失わせやすいです。
+
+このtoolの差別化はGradioやcolor paletteではなく、**recolorする場所をmaskで明示し、元のvalueをどこまで残すかを利用者自身が調整できること**です。
+
+「AIがいい感じに変える」のではなく、変えてよい領域と残したい情報を分離します。
+
+## User journey
+
+```text
+元Eye Textureを用意
+  → iris maskを作る
+  → palette / modeを選ぶ
+  → keep_value / saturationを調整
+  → preview
+  → RGBA PNGを出力
+  → Unity / lilToonで実avatar上を確認
+```
+
+## What you can do
+
+- 元の明るさを残すeye recolor
+- pastel palette
+- Basic / Gradient / Aurora mode
+- saturation / luminance-retention tuning
+- optional emission ring mask
+- RGBA PNG output
+- browser execution
+
+## Inputs
 
 ### Eye Texture
 
-元の瞳テクスチャです。PNGのRGBまたはRGBA画像を推奨します。
+元の瞳texture。RGB / RGBA PNGを推奨します。
 
 ### Mask
 
-適用範囲を示す白黒画像です。
+変更範囲を示すgrayscale imageです。
 
 ```text
-白 = 色変換する領域
-黒 = 元の色を保持する領域
-灰色 = 部分的に適用する境界
+white = recolor
+black = preserve source
+gray  = partial blend
 ```
 
-元テクスチャと同じ解像度・配置で作成するのが最も安全です。
+元textureと同じresolution / layoutを推奨します。
 
-## マスクの作り方
+## Mask creation
 
-1. Photoshop、GIMP、Clip Studio Paintなどで元テクスチャを開く
-2. 新しいレイヤーを作る
-3. 虹彩だけを白で塗る
-4. 白目、まぶた、まつ毛、影などは黒にする
-5. 必要に応じて境界へ1〜2px程度のぼかしを加える
-6. 元画像と同じキャンバスサイズで8bitグレースケールPNGとして保存する
+1. Photoshop / GIMP / Clip Studio等で元textureを開く
+2. 新layerを作る
+3. irisだけwhite
+4. sclera / eyelid / eyelash / unwanted shadowはblack
+5. 必要ならedgeへ1〜2px程度blur
+6. 同canvas sizeの8-bit grayscale PNGとして保存
 
-左右の目が同じテクスチャ内にある場合は、両方の虹彩を同じ位置関係でマスクしてください。
+左右eyeが同texture内なら、両方のirisを対応位置でmaskしてください。
 
-## 使い方
+## Modes
 
-1. Webアプリを開く
-2. `Eye Texture`へ元画像をアップロードする
-3. `Mask`へ白黒マスクをアップロードする
-4. パレットを選ぶ
-5. 効果モードを選ぶ
-6. `keep_value`と`sat_scale`を調整する
-7. 必要な場合はEmissionマスク出力を有効にする
-8. 生成を実行する
-9. 出力PNGを保存する
+### Basic
 
-## 主な設定
+指定colorへの基本recolor。
 
-### パレット
+### Gradient
 
-```text
-pastel_cyan
-pink
-lavender
-mint
-peach
-lemon
-coral
-sky
-```
+中心から外周へcolor variation + highlight。
 
-### 効果モード
+### Aurora
 
-- **Basic** — 指定色への基本変換
-- **Gradient** — 中心から外周への色変化とハイライト
-- **Aurora** — 色相を周期的に変化させる効果
+周期的なhue variation。
 
-### 調整値
+主なcontrols:
 
-- `keep_value` — 元画像の明度をどの程度残すか
-- `sat_scale` — 彩度の倍率
-- Gradientのハイライト量
-- Auroraの揺らぎ強度
-- Emissionリングの内径・外径・ぼかし
+- `keep_value` — source luminance retention
+- `sat_scale` — saturation multiplier
+- gradient highlight amount
+- aurora variation strength
+- emission inner/outer radius + blur
 
-値を大きくすると必ず良くなるわけではありません。元画像とマスクを見ながら調整してください。
+値を大きくすれば良くなるわけではありません。source textureとpreviewを見て判断します。
 
-## Unity / lilToonで使う
+## Unity / lilToon boundary
 
-1. 生成したPNGをUnityへインポートする
-2. lilToonマテリアルのMain Textureへ設定する
-3. マテリアルのColorは白を基準にする
-4. 目メッシュのRendererへ割り当てる
-5. Play Modeで左右、UV、透明度を確認する
+1. output PNGをUnityへimport
+2. lilToon Main Textureへ設定
+3. Material Colorをwhite基準にする
+4. eye mesh Rendererへassign
+5. Play Modeでleft/right、UV、alpha、lightingを確認
 
-Emissionを使う場合:
+Emission使用時:
 
-1. lilToonのEmissionを有効にする
-2. 生成したEmissionマスクを対応スロットへ設定する
-3. HDRのEmission Colorと強度を調整する
-4. 暗所・明所・Bloom有無で確認する
+1. lilToon Emissionをenable
+2. generated emission maskを指定
+3. HDR emission color / intensity調整
+4. dark / bright / Bloom on/offで確認
 
-lilToonの設定名はバージョンによって変わる可能性があるため、使用中の公式ドキュメントを確認してください。
+lilToon property nameやbehaviorはversionで変わり得るため、使用versionのofficial docsを確認してください。
 
-## 仕上がりの調整
+## Troubleshooting
 
 ### 色が薄い
 
 - `sat_scale`を少し上げる
-- マスクの白領域を確認する
-- Unity側のMaterial Colorを白へ戻す
+- mask white areaを確認
+- Unity Material Colorをwhiteへ戻す
 
 ### 暗い
 
-- `keep_value`を調整する
-- 元テクスチャの陰影が強すぎないか確認する
-- Unity側のライティングとEmissionを確認する
+- `keep_value`を調整
+- source textureのshadowを確認
+- Unity lighting / emissionを確認
 
-### マスク境界が目立つ
+### Mask境界が目立つ
 
-- マスクへ軽いぼかしを加える
-- 元画像とマスクの解像度・位置を一致させる
-- アルファ境界を確認する
+- maskへ軽いblur
+- texture / maskのresolution・position一致を確認
+- alpha boundaryを確認
 
-## 権利・プライバシー
+## Privacy / rights
 
-- アップロードするテクスチャの利用規約を確認してください
-- 購入アバターのテクスチャを、許諾なく公開・共有しないでください
-- Hugging Face Spaceへ送信する画像に機密情報を含めないでください
-- 生成物の再配布・商用利用可否は元テクスチャの規約に従います
+- source textureの利用規約を確認
+- 購入avatar textureを無断公開・共有しない
+- Hugging Face Spaceへ送る画像に機密情報を入れない
+- generated outputの再配布・商用可否はsource texture規約に従う
 
-## ローカル実行
-
-リポジトリの依存関係を導入し、Gradioアプリを起動します。
+## Local run
 
 ```bash
 python app.py
 ```
 
-実際のPython版と依存関係は、Spaceの設定とリポジトリ内の依存ファイルを正としてください。
+実際のPython version / dependencyはSpace設定とrepositoryのdependency filesを正とします。
+
+## Done
+
+成功指標はpalette数やeffect数ではありません。
+
+**利用者が「どこを変え、何を残すか」を自分で制御し、元の陰影を壊さずに色案を試し、最終的なavatar上の見た目はUnityで別途確認できること**をDoneとします。
