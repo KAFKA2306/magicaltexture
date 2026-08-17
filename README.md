@@ -11,6 +11,8 @@ pinned: false
 
 # magicaltexture — Pastel Eye Colorizer
 
+[![CI & Deploy to HuggingFace Spaces](https://github.com/KAFKA2306/magicaltexture/actions/workflows/deploy.yml/badge.svg)](https://github.com/KAFKA2306/magicaltexture/actions/workflows/deploy.yml)
+
 **瞳の色を変えたいだけなのに、元の明るさ・影・透明感まで壊したくない。**
 
 `magicaltexture` は、元テクスチャと白黒maskを使って虹彩だけをrecolorし、**元の陰影を残しながら「どこを・どの程度変えたか」を自分で調整できるWeb tool**です。
