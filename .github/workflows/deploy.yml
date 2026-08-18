@@ -22,6 +22,8 @@ jobs:
   test:
     name: Lint & Smoke Test
     runs-on: ubuntu-latest
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
 
     steps:
       - name: Checkout
