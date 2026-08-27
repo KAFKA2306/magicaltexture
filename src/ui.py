@@ -18,7 +18,7 @@ def _inquiry_url(*, generation_type, modes, palettes, request_type):
             "## 制作相談",
             "",
             f"- request_type: {request_type}",
-            f"- source: huggingface-space",
+            "- source: huggingface-space",
             f"- generation_type: {generation_type}",
             f"- mode: {mode_value}",
             f"- palette: {palette_value}",
@@ -241,7 +241,8 @@ def create_ui():
 - マスク作成を含む個別調整
 - lilToon導入時の設定情報を含む納品
 
-**必要素材:** 元テクスチャ、編集範囲が分かる情報、対象アバター/用途。依頼者が編集・納品に必要な権利または許諾を持つ素材のみ対象です。
+**必要素材:** 元テクスチャ、編集範囲が分かる情報、対象アバター/用途。
+依頼者が編集・納品に必要な権利または許諾を持つ素材のみ対象です。
 
 実商品・販売実績は、公開されているものだけを案内します。現在は制作相談を受け付けます。
 
