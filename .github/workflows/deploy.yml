@@ -59,6 +59,50 @@ jobs:
           print("App import OK")
           PY
 
+      - name: Verify batch ZIP manifest
+        run: |
+          python - << 'PY'
+          import json
+          import zipfile
+
+          from PIL import Image
+
+          from src.generators import generate_batch
+
+          eye = Image.new("RGBA", (8, 8), (100, 80, 60, 255))
+          mask = Image.new("L", (8, 8), 255)
+          gallery, zip_path = generate_batch(
+              eye,
+              mask,
+              ["pastel_pink"],
+              ["Basic"],
+              "ci_eye",
+              0.7,
+              1.0,
+              0.4,
+              0.3,
+              True,
+              0.07,
+              0.14,
+              0.06,
+          )
+          assert len(gallery) == 1
+          with zipfile.ZipFile(zip_path) as zf:
+              names = set(zf.namelist())
+              assert "preset_manifest.json" in names
+              manifest = json.loads(zf.read("preset_manifest.json"))
+              assert manifest["generator"]["revision"] == __import__("os").environ["GITHUB_SHA"]
+              assert manifest["selection"]["palettes"] == ["pastel_pink"]
+              assert manifest["selection"]["modes"] == ["Basic"]
+              outputs = manifest["outputs"]
+              assert {item["kind"] for item in outputs} == {"main_texture", "emission_mask"}
+              for item in outputs:
+                  assert len(item["sha256"]) == 64
+                  assert item["size_bytes"] > 0
+                  assert item["path"] in names
+          print("Batch ZIP manifest OK")
+          PY
+
       - name: Package artifact
         if: always()
         run: |
@@ -98,6 +142,11 @@ jobs:
           test -n "$HF_TOKEN" || (echo "HF_TOKEN not set" && exit 1)
           test -n "$HF_SPACE_ID" || (echo "HF_SPACE_ID not set" && exit 1)
 
+      - name: Stamp deployed revision
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: printf '%s\n' "$GITHUB_SHA" > .magicaltexture-revision
+
       - name: Upload to Space via HfApi
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -124,6 +173,7 @@ jobs:
                   "requirements.txt",
                   "README.md",
                   "assets/**",
+                  ".magicaltexture-revision",
               ],
               ignore_patterns=[
                   ".git/**",

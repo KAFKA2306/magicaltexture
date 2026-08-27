@@ -1,25 +1,59 @@
 from __future__ import annotations
+
+import hashlib
 import io
+import json
 import os
-import zipfile
+import tempfile
 import uuid
+import zipfile
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import List
+
 import gradio as gr
 from PIL import Image
+
+from .config import PASTELS, PRETTY
 from .core import (
-    load_rgba,
-    load_mask,
+    apply_aurora,
     apply_basic,
     apply_gradient,
-    apply_aurora,
     build_emission,
+    load_mask,
+    load_rgba,
 )
-from .config import PASTELS, PRETTY
 
 
 def _sanitize(s: str) -> str:
-    """Sanitize filename string"""
+    """Sanitize filename string."""
     return "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in s)
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _png_bytes(image: Image.Image, mode: str) -> bytes:
+    """Serialize a normalized input/output image as deterministic PNG bytes."""
+    normalized = image.convert(mode)
+    buf = io.BytesIO()
+    normalized.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _generator_revision() -> str:
+    """Return the exact deployed revision when available, otherwise an explicit local state."""
+    revision_file = Path(__file__).resolve().parent.parent / ".magicaltexture-revision"
+    if revision_file.is_file():
+        revision = revision_file.read_text(encoding="utf-8").strip()
+        if revision:
+            return revision
+    return (
+        os.environ.get("MAGICALTEXTURE_REVISION")
+        or os.environ.get("GITHUB_SHA")
+        or "local-unpinned"
+    )
 
 
 def generate_single(
@@ -36,7 +70,7 @@ def generate_single(
     ring_outer: float,
     ring_soft: float,
 ):
-    """Generate single eye texture with specified parameters"""
+    """Generate single eye texture with specified parameters."""
     if eye_img is None or mask_img is None:
         raise gr.Error("eye_texture と mask の両方をアップロードしてください。")
     rgba = load_rgba(eye_img)
@@ -79,27 +113,41 @@ def generate_batch(
     ring_outer: float,
     ring_soft: float,
 ):
-    """Generate batch of eye textures with multiple colors and modes"""
+    """Generate a batch ZIP with textures and a reproducibility/provenance manifest."""
     if eye_img is None or mask_img is None:
         raise gr.Error("eye_texture と mask の両方をアップロードしてください。")
     if not selected_colors:
         raise gr.Error("少なくとも1つのパレットを選択してください。")
     if not selected_modes:
         raise gr.Error("少なくとも1つの効果モードを選択してください。")
+
     rgba = load_rgba(eye_img)
     mask01 = load_mask(mask_img, (rgba.shape[1], rgba.shape[0]))
+    eye_png = _png_bytes(eye_img, "RGBA")
+    mask_png = _png_bytes(mask_img, "L")
+
     gallery_items = []
+    output_manifest = []
     zip_buf = io.BytesIO()
     zip_name = f"{_sanitize(filename_prefix) or 'batch'}_{uuid.uuid4().hex[:8]}.zip"
+
     with zipfile.ZipFile(zip_buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         if make_emission:
             emi = build_emission(
                 mask01, inner=ring_inner, outer=ring_outer, softness=ring_soft
             )
-            emi_pil = Image.fromarray(emi, mode="L")
-            b = io.BytesIO()
-            emi_pil.save(b, format="PNG")
-            zf.writestr("emission_mask.png", b.getvalue())
+            emi_png = _png_bytes(Image.fromarray(emi, mode="L"), "L")
+            emission_name = "emission_mask.png"
+            zf.writestr(emission_name, emi_png)
+            output_manifest.append(
+                {
+                    "path": emission_name,
+                    "kind": "emission_mask",
+                    "sha256": _sha256(emi_png),
+                    "size_bytes": len(emi_png),
+                }
+            )
+
         for ckey in selected_colors:
             hue, sat, val = PASTELS[ckey]
             for mode in selected_modes:
@@ -133,17 +181,81 @@ def generate_batch(
                         keep_value=keep_value,
                         strength=aurora_strength,
                     )
+
                 pil = Image.fromarray(out, mode="RGBA")
                 caption = f"{PRETTY.get(ckey, ckey)} · {mode}"
                 gallery_items.append((pil, caption))
                 fname = (
                     f"{_sanitize(filename_prefix) or 'eye'}_{ckey}_{mode.lower()}.png"
                 )
-                buf = io.BytesIO()
-                pil.save(buf, format="PNG")
-                zf.writestr(fname, buf.getvalue())
+                png = _png_bytes(pil, "RGBA")
+                zf.writestr(fname, png)
+                output_manifest.append(
+                    {
+                        "path": fname,
+                        "kind": "main_texture",
+                        "palette": ckey,
+                        "mode": mode,
+                        "sha256": _sha256(png),
+                        "size_bytes": len(png),
+                    }
+                )
+
+        manifest = {
+            "schema_version": 1,
+            "generator": {
+                "name": "magicaltexture",
+                "repository": "https://github.com/KAFKA2306/magicaltexture",
+                "revision": _generator_revision(),
+            },
+            "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+            "inputs": {
+                "eye_texture": {
+                    "normalized_png_sha256": _sha256(eye_png),
+                    "width": eye_img.width,
+                    "height": eye_img.height,
+                    "mode": "RGBA",
+                },
+                "mask": {
+                    "normalized_png_sha256": _sha256(mask_png),
+                    "width": mask_img.width,
+                    "height": mask_img.height,
+                    "mode": "L",
+                },
+            },
+            "selection": {
+                "palettes": list(selected_colors),
+                "modes": list(selected_modes),
+                "filename_prefix": _sanitize(filename_prefix) or "eye",
+            },
+            "parameters": {
+                "keep_value": keep_value,
+                "sat_scale": sat_scale,
+                "highlight": highlight,
+                "aurora_strength": aurora_strength,
+                "make_emission": make_emission,
+                "ring_inner": ring_inner,
+                "ring_outer": ring_outer,
+                "ring_soft": ring_soft,
+            },
+            "outputs": output_manifest,
+            "rights": {
+                "source_files_embedded": False,
+                "notice": (
+                    "Generated-output redistribution/commercial rights remain subject "
+                    "to the source texture and avatar license."
+                ),
+            },
+        }
+        zf.writestr(
+            "preset_manifest.json",
+            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True).encode(
+                "utf-8"
+            ),
+        )
+
     zip_buf.seek(0)
-    zip_path = os.path.join(gr.utils.get_temp_dir(), zip_name)
+    zip_path = os.path.join(tempfile.gettempdir(), zip_name)
     with open(zip_path, "wb") as f:
         f.write(zip_buf.read())
     return gallery_items, zip_path
