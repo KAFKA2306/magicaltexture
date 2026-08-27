@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import os
+import tempfile
 import uuid
 import zipfile
 from datetime import datetime, timezone
@@ -254,7 +255,7 @@ def generate_batch(
         )
 
     zip_buf.seek(0)
-    zip_path = os.path.join(gr.utils.get_temp_dir(), zip_name)
+    zip_path = os.path.join(tempfile.gettempdir(), zip_name)
     with open(zip_path, "wb") as f:
         f.write(zip_buf.read())
     return gallery_items, zip_path
