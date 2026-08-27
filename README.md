@@ -9,6 +9,11 @@ app_file: app.py
 pinned: false
 ---
 
+https://k4fka-magicaltexture.hf.space
+https://kafka2306.github.io/magicaltexture/
+https://github.com/KAFKA2306/magicaltexture/blob/main/docs/business.md
+https://github.com/KAFKA2306/magicaltexture/issues/new?title=%E5%88%B6%E4%BD%9C%E7%9B%B8%E8%AB%87
+
 # magicaltexture — Pastel Eye Colorizer
 
 [![CI & Deploy to HuggingFace Spaces](https://github.com/KAFKA2306/magicaltexture/actions/workflows/deploy.yml/badge.svg)](https://github.com/KAFKA2306/magicaltexture/actions/workflows/deploy.yml)
@@ -16,10 +21,6 @@ pinned: false
 **瞳の色を変えたいだけなのに、元の明るさ・影・透明感まで壊したくない。**
 
 `magicaltexture` は、元テクスチャと白黒maskを使って虹彩だけをrecolorし、**元の陰影を残しながら「どこを・どの程度変えたか」を自分で調整できるWeb tool**です。
-
-- Web app: https://k4fka-magicaltexture.hf.space
-- Hugging Face Space: https://huggingface.co/spaces/k4fka/magicaltexture
-- Guide: https://kafka2306.github.io/magicaltexture/
 
 ## Vision
 
@@ -52,6 +53,7 @@ avatar texture editingを「色を重ねて、Unityで開いて、壊れてい�
   → keep_value / saturationを調整
   → preview
   → RGBA PNGを出力
+  → 必要なら生成条件付きで制作相談
   → Unity / lilToonで実avatar上を確認
 ```
 
@@ -64,6 +66,20 @@ avatar texture editingを「色を重ねて、Unityで開いて、壊れてい�
 - optional emission ring mask
 - RGBA PNG output
 - browser execution
+- Batch ZIP + reproducibility manifest
+- Single/Batch生成条件を引き継いだ制作者向け制作相談
+
+## Creator services
+
+無料生成で方向性を確認した後、アバター別調整、販売アバター向け複数色セット、Emission差分、専用パレット、マスク作成を含む制作を相談できます。
+
+詳細と権利条件:
+https://github.com/KAFKA2306/magicaltexture/blob/main/docs/business.md
+
+制作相談:
+https://github.com/KAFKA2306/magicaltexture/issues/new?title=%E5%88%B6%E4%BD%9C%E7%9B%B8%E8%AB%87
+
+実商品・販売実績は、公開されているものだけを案内します。
 
 ## Inputs
 
@@ -174,4 +190,4 @@ python app.py
 
 成功指標はpalette数やeffect数ではありません。
 
-**利用者が「どこを変え、何を残すか」を自分で制御し、元の陰影を壊さずに色案を試し、最終的なavatar上の見た目はUnityで別途確認できること**をDoneとします。
+**利用者が「どこを変え、何を残すか」を自分で制御し、元の陰影を壊さずに色案を試し、必要なら生成条件を保ったまま制作相談へ進み、最終的なavatar上の見た目はUnityで別途確認できること**をDoneとします。
