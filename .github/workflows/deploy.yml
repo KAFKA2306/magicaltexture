@@ -59,10 +59,12 @@ jobs:
           print("App import OK")
           PY
 
-      - name: Verify batch ZIP manifest
+      - name: Verify creator-ready batch ZIP
         run: |
           python - << 'PY'
+          import hashlib
           import json
+          import os
           import zipfile
 
           from PIL import Image
@@ -89,18 +91,28 @@ jobs:
           assert len(gallery) == 1
           with zipfile.ZipFile(zip_path) as zf:
               names = set(zf.namelist())
-              assert "preset_manifest.json" in names
+              assert {"preset_manifest.json", "README.txt", "emission_mask.png"} <= names
               manifest = json.loads(zf.read("preset_manifest.json"))
-              assert manifest["generator"]["revision"] == __import__("os").environ["GITHUB_SHA"]
+              assert manifest["generator"]["revision"] == os.environ["GITHUB_SHA"]
               assert manifest["selection"]["palettes"] == ["pastel_pink"]
               assert manifest["selection"]["modes"] == ["Basic"]
+              assert manifest["package"]["guide"] == "README.txt"
+              assert manifest["package"]["primary_preview"] in names
+              assert manifest["package"]["runtime_validation"] == "not_performed"
+              guide = zf.read("README.txt").decode("utf-8")
+              assert "Unity / lilToonでの確認" in guide
+              assert "元素材の規約" in guide
               outputs = manifest["outputs"]
-              assert {item["kind"] for item in outputs} == {"main_texture", "emission_mask"}
+              assert {item["kind"] for item in outputs} == {
+                  "main_texture",
+                  "emission_mask",
+                  "package_guide",
+              }
               for item in outputs:
-                  assert len(item["sha256"]) == 64
-                  assert item["size_bytes"] > 0
-                  assert item["path"] in names
-          print("Batch ZIP manifest OK")
+                  payload = zf.read(item["path"])
+                  assert hashlib.sha256(payload).hexdigest() == item["sha256"]
+                  assert len(payload) == item["size_bytes"]
+          print("Creator-ready batch ZIP OK")
           PY
 
       - name: Package artifact
