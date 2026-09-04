@@ -56,6 +56,41 @@ def _generator_revision() -> str:
     )
 
 
+def _package_guide(*, primary_preview: str, has_emission: bool) -> bytes:
+    """Build a concise delivery guide without claiming rights or runtime validation."""
+    emission_step = (
+        "- emission_mask.png: lilToonのEmissionで使うマスク候補です。実際の色・強度はUnity上で調整してください。\n"
+        if has_emission
+        else "- Emission maskはこのZIPでは生成していません。\n"
+    )
+    text = (
+        "magicaltexture creator package\n"
+        "==============================\n\n"
+        "このZIPは、生成した瞳テクスチャと再現条件をまとめた納品準備用パッケージです。\n"
+        "生成成功はUnity・lilToon・VRChat上の見た目確認を意味しません。\n\n"
+        "内容\n"
+        "----\n"
+        "- *.png: 生成したMain Texture候補です。\n"
+        f"- primary preview: {primary_preview}\n"
+        f"{emission_step}"
+        "- preset_manifest.json: 入力ハッシュ、生成条件、generator revision、出力ハッシュを記録します。\n"
+        "- README.txt: このファイルです。\n\n"
+        "Unity / lilToonでの確認\n"
+        "----------------------\n"
+        "1. 生成PNGをUnityへimportします。\n"
+        "2. 対象materialのlilToon Main Textureへ生成したMain Texture候補を設定します。\n"
+        "3. Emissionを使う場合は、使用中のlilToonのEmission設定へemission_mask.pngを割り当てます。\n"
+        "4. 対象avatarでUV、alpha、左右の目、明所・暗所、必要ならBloom有無を確認します。\n"
+        "5. 使用中のlilToon versionの公式ドキュメントを確認し、material設定を調整します。\n\n"
+        "権利と配布\n"
+        "----------\n"
+        "- このZIPは元テクスチャやavatarの利用許諾を追加・変更しません。\n"
+        "- 編集、納品、販売、再配布の可否は元素材の規約と権利者の許諾を確認してください。\n"
+        "- preset_manifest.jsonのハッシュは生成物の同一性確認用で、権利証明ではありません。\n"
+    )
+    return text.encode("utf-8")
+
+
 def generate_single(
     eye_img: Image.Image,
     mask_img: Image.Image,
@@ -113,7 +148,7 @@ def generate_batch(
     ring_outer: float,
     ring_soft: float,
 ):
-    """Generate a batch ZIP with textures and a reproducibility/provenance manifest."""
+    """Generate a creator-ready batch ZIP with reproducibility and rights guidance."""
     if eye_img is None or mask_img is None:
         raise gr.Error("eye_texture と mask の両方をアップロードしてください。")
     if not selected_colors:
@@ -128,6 +163,7 @@ def generate_batch(
 
     gallery_items = []
     output_manifest = []
+    primary_preview = None
     zip_buf = io.BytesIO()
     zip_name = f"{_sanitize(filename_prefix) or 'batch'}_{uuid.uuid4().hex[:8]}.zip"
 
@@ -188,6 +224,8 @@ def generate_batch(
                 fname = (
                     f"{_sanitize(filename_prefix) or 'eye'}_{ckey}_{mode.lower()}.png"
                 )
+                if primary_preview is None:
+                    primary_preview = fname
                 png = _png_bytes(pil, "RGBA")
                 zf.writestr(fname, png)
                 output_manifest.append(
@@ -200,6 +238,24 @@ def generate_batch(
                         "size_bytes": len(png),
                     }
                 )
+
+        if primary_preview is None:
+            raise RuntimeError("Batch generation produced no main texture output.")
+
+        guide_name = "README.txt"
+        guide = _package_guide(
+            primary_preview=primary_preview,
+            has_emission=make_emission,
+        )
+        zf.writestr(guide_name, guide)
+        output_manifest.append(
+            {
+                "path": guide_name,
+                "kind": "package_guide",
+                "sha256": _sha256(guide),
+                "size_bytes": len(guide),
+            }
+        )
 
         manifest = {
             "schema_version": 1,
@@ -237,6 +293,11 @@ def generate_batch(
                 "ring_inner": ring_inner,
                 "ring_outer": ring_outer,
                 "ring_soft": ring_soft,
+            },
+            "package": {
+                "guide": guide_name,
+                "primary_preview": primary_preview,
+                "runtime_validation": "not_performed",
             },
             "outputs": output_manifest,
             "rights": {
