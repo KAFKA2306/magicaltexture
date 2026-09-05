@@ -36,20 +36,21 @@
 
 依頼者が、加工・納品・利用に必要な権利または許諾を持つ素材のみ対象です。購入アバターや購入テクスチャの利用規約は、`magicaltexture` の生成物や制作依頼によって上書きされません。再配布・販売・商用利用の可否は必ず元素材の規約に従ってください。
 
-## 標準納品構成
-
-案件に応じて不要な項目は省きます。
+## Batch ZIPの標準構成
 
 ```text
-main_texture.png
-emission_mask.png      # 必要な場合のみ
+<生成したMain Texture>.png
+emission_mask.png              # 選択時のみ
 preview.png
 preset_manifest.json
 liltoon-settings.md
-LICENSE-or-TERMS.txt
+DISTRIBUTION-CHECKLIST.txt
+README.txt
 ```
 
-Batch生成ZIPでは `preset_manifest.json` にpalette、mode、調整値、generator revision、入力SHA-256、出力SHA-256/sizeを記録します。
+`preset_manifest.json` にはpalette、mode、調整値、generator revision、入力SHA-256、出力SHA-256/sizeを記録します。`preview.png` は先頭のMain Textureを固定名で参照できるようにしたものです。`liltoon-settings.md` は生成時の値を記録しますが、UnityやlilToonへ設定済みであることは意味しません。
+
+元素材の利用規約はツール側で判定できないため、架空の `LICENSE` を生成しません。`DISTRIBUTION-CHECKLIST.txt` とmanifestでは source license を `UNVERIFIED`、distribution を `review_required` として扱い、実際の利用規約・許諾とUnity/VRChat上の確認を終えるまで販売・再配布可能とは判定しません。
 
 ## 制作相談を始める
 
