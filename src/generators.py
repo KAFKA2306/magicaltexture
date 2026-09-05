@@ -71,9 +71,12 @@ def _package_guide(*, primary_preview: str, has_emission: bool) -> bytes:
         "内容\n"
         "----\n"
         "- *.png: 生成したMain Texture候補です。\n"
-        f"- primary preview: {primary_preview}\n"
+        f"- primary texture: {primary_preview}\n"
+        "- preview.png: primary textureを確認しやすい固定名で複製したpreviewです。\n"
         f"{emission_step}"
         "- preset_manifest.json: 入力ハッシュ、生成条件、generator revision、出力ハッシュを記録します。\n"
+        "- liltoon-settings.md: 生成時の調整値とUnity側で確認すべき項目を記録します。\n"
+        "- DISTRIBUTION-CHECKLIST.txt: 販売・再配布前の権利/runtime確認項目です。\n"
         "- README.txt: このファイルです。\n\n"
         "Unity / lilToonでの確認\n"
         "----------------------\n"
@@ -87,6 +90,61 @@ def _package_guide(*, primary_preview: str, has_emission: bool) -> bytes:
         "- このZIPは元テクスチャやavatarの利用許諾を追加・変更しません。\n"
         "- 編集、納品、販売、再配布の可否は元素材の規約と権利者の許諾を確認してください。\n"
         "- preset_manifest.jsonのハッシュは生成物の同一性確認用で、権利証明ではありません。\n"
+        "- DISTRIBUTION-CHECKLIST.txtが未確認のままなら配布可能とは判定しません。\n"
+    )
+    return text.encode("utf-8")
+
+
+def _liltoon_settings_guide(
+    *,
+    keep_value: float,
+    sat_scale: float,
+    highlight: float,
+    aurora_strength: float,
+    make_emission: bool,
+    ring_inner: float,
+    ring_outer: float,
+    ring_soft: float,
+) -> bytes:
+    """Record generator-side settings without inventing lilToon material values."""
+    text = (
+        "# magicaltexture → lilToon handoff\n\n"
+        "このファイルは生成条件の引き継ぎ用です。lilToonのMaterial値を自動設定した証拠ではありません。\n\n"
+        "## Generator parameters\n\n"
+        f"- keep_value: {keep_value}\n"
+        f"- sat_scale: {sat_scale}\n"
+        f"- highlight: {highlight}\n"
+        f"- aurora_strength: {aurora_strength}\n"
+        f"- make_emission: {make_emission}\n"
+        f"- ring_inner: {ring_inner}\n"
+        f"- ring_outer: {ring_outer}\n"
+        f"- ring_soft: {ring_soft}\n\n"
+        "## Unity check\n\n"
+        "- Main Textureへ対象PNGを設定する\n"
+        "- UV、alpha、左右の目を確認する\n"
+        "- Emission使用時はemission_mask.pngを設定し、色・強度をUnity側で調整する\n"
+        "- 明所・暗所、必要ならBloom on/offで見た目を確認する\n"
+        "- 使用中のlilToon versionの公式ドキュメントを確認する\n\n"
+        "Unity / VRChat runtime validation: UNVERIFIED\n"
+    )
+    return text.encode("utf-8")
+
+
+def _distribution_checklist() -> bytes:
+    """Create a fail-closed distribution checklist; it never grants a source license."""
+    text = (
+        "magicaltexture distribution checklist\n"
+        "=====================================\n\n"
+        "Status: UNVERIFIED\n\n"
+        "販売・再配布の前に、実際の元素材と利用先について確認してください。\n\n"
+        "[ ] 元テクスチャ/avatarの加工が許可されている\n"
+        "[ ] 想定する販売・再配布・商用利用が元素材の規約で許可されている\n"
+        "[ ] 権利者・商品名・利用規約URLまたは許諾記録を別途保存した\n"
+        "[ ] Unity上でUV、alpha、左右の目、明所・暗所を確認した\n"
+        "[ ] VRChat向け配布なら対象runtimeで実際に確認した\n"
+        "[ ] 配布物に必要なクレジット・利用条件を付けた\n\n"
+        "このファイル自体は利用許諾を付与しません。\n"
+        "確認前の状態を販売・再配布可能とは扱いません。\n"
     )
     return text.encode("utf-8")
 
@@ -164,6 +222,7 @@ def generate_batch(
     gallery_items = []
     output_manifest = []
     primary_preview = None
+    primary_preview_png = None
     zip_buf = io.BytesIO()
     zip_name = f"{_sanitize(filename_prefix) or 'batch'}_{uuid.uuid4().hex[:8]}.zip"
 
@@ -224,9 +283,10 @@ def generate_batch(
                 fname = (
                     f"{_sanitize(filename_prefix) or 'eye'}_{ckey}_{mode.lower()}.png"
                 )
+                png = _png_bytes(pil, "RGBA")
                 if primary_preview is None:
                     primary_preview = fname
-                png = _png_bytes(pil, "RGBA")
+                    primary_preview_png = png
                 zf.writestr(fname, png)
                 output_manifest.append(
                     {
@@ -239,8 +299,53 @@ def generate_batch(
                     }
                 )
 
-        if primary_preview is None:
+        if primary_preview is None or primary_preview_png is None:
             raise RuntimeError("Batch generation produced no main texture output.")
+
+        preview_name = "preview.png"
+        zf.writestr(preview_name, primary_preview_png)
+        output_manifest.append(
+            {
+                "path": preview_name,
+                "kind": "preview",
+                "source": primary_preview,
+                "sha256": _sha256(primary_preview_png),
+                "size_bytes": len(primary_preview_png),
+            }
+        )
+
+        settings_name = "liltoon-settings.md"
+        settings = _liltoon_settings_guide(
+            keep_value=keep_value,
+            sat_scale=sat_scale,
+            highlight=highlight,
+            aurora_strength=aurora_strength,
+            make_emission=make_emission,
+            ring_inner=ring_inner,
+            ring_outer=ring_outer,
+            ring_soft=ring_soft,
+        )
+        zf.writestr(settings_name, settings)
+        output_manifest.append(
+            {
+                "path": settings_name,
+                "kind": "settings_guide",
+                "sha256": _sha256(settings),
+                "size_bytes": len(settings),
+            }
+        )
+
+        checklist_name = "DISTRIBUTION-CHECKLIST.txt"
+        checklist = _distribution_checklist()
+        zf.writestr(checklist_name, checklist)
+        output_manifest.append(
+            {
+                "path": checklist_name,
+                "kind": "distribution_checklist",
+                "sha256": _sha256(checklist),
+                "size_bytes": len(checklist),
+            }
+        )
 
         guide_name = "README.txt"
         guide = _package_guide(
@@ -297,11 +402,16 @@ def generate_batch(
             "package": {
                 "guide": guide_name,
                 "primary_preview": primary_preview,
+                "preview": preview_name,
+                "settings_guide": settings_name,
+                "distribution_checklist": checklist_name,
                 "runtime_validation": "not_performed",
             },
             "outputs": output_manifest,
             "rights": {
                 "source_files_embedded": False,
+                "source_license_status": "UNVERIFIED",
+                "distribution_status": "review_required",
                 "notice": (
                     "Generated-output redistribution/commercial rights remain subject "
                     "to the source texture and avatar license."
